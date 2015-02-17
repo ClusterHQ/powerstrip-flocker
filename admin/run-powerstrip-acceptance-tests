@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+# Copyright Hybrid Logic Ltd.  See LICENSE file for details.
+"""
+Run some powerstrip acceptance tests.
+"""
+# hack to get access to flocker module in submodule (rather than a version of
+# flocker that happens to be installed locally)
+import sys, os
+FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../")) + "/flocker"
+sys.path.insert(0, FLOCKER_PATH)
+
+# another hack - this time make the tests run faster by avoiding fetching lots
+# of docker images.
+from flocker.provision import _install
+del _install.ACCEPTANCE_IMAGES[:]
+
+#from flocker.acceptance import test_api
+
+from twisted.python.filepath import FilePath
+import sys
+
+path = BASEPATH = FilePath(sys.argv[0])
+for parent in list(path.parents()) + [FilePath(FLOCKER_PATH)]:
+    if parent.descendant(['flocker', '__init__.py']).exists():
+        TOPLEVEL = parent
+        sys.path.insert(0, parent.path)
+        break
+else:
+    raise ImportError("Could not find top-level.")
+
+if __name__ == '__main__':
+    from admin.acceptance import main
+    main(sys.argv[1:], top_level=TOPLEVEL, base_path=BASEPATH)
