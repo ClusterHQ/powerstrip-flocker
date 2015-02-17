@@ -14,8 +14,6 @@ sys.path.insert(0, FLOCKER_PATH)
 from flocker.provision import _install
 del _install.ACCEPTANCE_IMAGES[:]
 
-#from flocker.acceptance import test_api
-
 from twisted.python.filepath import FilePath
 import sys
 
