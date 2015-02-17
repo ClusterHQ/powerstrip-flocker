@@ -1,0 +1,3 @@
+[submodule "flocker"]
+	path = flocker
+	url = https://github.com/clusterhq/flocker
