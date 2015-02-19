@@ -4,23 +4,32 @@
 Acceptance tests for powerstrip-flocker which can be run against the same
 acceptance testing infrastructure (Vagrant, etc) as Flocker itself.
 
-Reuses the flocker tutorial vagrant boxes.  For how to run, see:
-http://doc-dev.clusterhq.com/gettinginvolved/acceptance-testing.html
-
 Eventually powerstrip-flocker should have unit tests, but starting with
 integration tests is a reasonable first pass, since unit tests depend on having
 a big stack of (ideally verified) fakes for Docker, powerstrip, flocker API
 etc.
 
-Run these tests with:
+Run these tests first time with:
 
-    $ admin/run-powerstrip-acceptance-tests --keep \
-          --distribution=fedora-20 powerstripflocker.test.test_acceptance
+$ vagrant box add \
+        http://build.clusterhq.com/results/vagrant/master/flocker-tutorial.json
+$ admin/run-powerstrip-acceptance-tests \
+        --keep --distribution=fedora-20 powerstripflocker.test.test_acceptance
+
+After that, you can do quick test runs with the following.
+
+If you haven't changed the server-side component:
+
+$ ./quick.sh --no-build
+
+Otherwise:
+
+$ ./quick.sh
 
 """
 
-# hack to get access to flocker module in submodule (rather than a version of
-# flocker that happens to be installed locally)
+# hack to ensure we import from flocker module in submodule (rather than a
+# version of flocker that happens to be installed locally)
 import sys, os
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
@@ -33,37 +42,12 @@ from twisted.internet import defer
 from flocker.acceptance.testtools import run_SSH
 from flocker.testtools import loop_until
 
-def run(node, command, input=""):
-    """
-    Synchronously run a command (list of bytes) on a node's address (bytes)
-    with optional input (bytes).
-    """
-    return run_SSH(22, "root", node, command, input)
-
-
 import socket
 
-def wait_for_socket(hostname, port):
-    # TODO: upstream this modified version into flocker
-    """
-    Wait until REST API is available.
-
-    :param str hostname: The host where the control service is
-         running.
-
-    :return Deferred: Fires when REST API is available.
-    """
-    def api_available():
-        try:
-            s = socket.socket()
-            s.connect((hostname, port))
-            return True
-        except socket.error:
-            return False
-    return loop_until(api_available)
-
-
 class PowerstripFlockerTests(TestCase):
+    """
+    Some real tests against 
+    """
 
     timeout = 1200
 
@@ -142,3 +126,31 @@ adapters:
         # at this point, we should have self.ips and powerstrip and
         # powerstrip-flocker running...
         import pdb; pdb.set_trace()
+
+
+def run(node, command, input=""):
+    """
+    Synchronously run a command (list of bytes) on a node's address (bytes)
+    with optional input (bytes).
+    """
+    return run_SSH(22, "root", node, command, input)
+
+
+def wait_for_socket(hostname, port):
+    # TODO: upstream this modified version into flocker
+    """
+    Wait until REST API is available.
+
+    :param str hostname: The host where the control service is
+         running.
+
+    :return Deferred: Fires when REST API is available.
+    """
+    def api_available():
+        try:
+            s = socket.socket()
+            s.connect((hostname, port))
+            return True
+        except socket.error:
+            return False
+    return loop_until(api_available)
