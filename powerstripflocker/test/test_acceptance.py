@@ -65,6 +65,9 @@ def wait_for_socket(hostname, port):
 
 
 class PowerstripFlockerTests(TestCase):
+
+    timeout = 1200
+
     def setUp(self):
         d = wait_for_cluster(self, 2)
         def got_cluster(cluster):
