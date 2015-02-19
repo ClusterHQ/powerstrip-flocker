@@ -105,24 +105,28 @@ endpoints:
   "POST /*/containers/create":
     pre: [flocker]
 adapters:
-  flocker: http://127.0.0.1:9999/flocker-adapter
+  flocker: http://powerstrip-flocker/flocker-adapter
 """)
-                # start powerstrip and powerstrip-flocker in net=host namespace
-                self.powerstrips[ip] = remote_service_for_test(self, ip,
-                    ["docker", "run", "--net=host", "--name=powerstrip",
-                       "-v", "/var/run/docker.sock:/var/run/docker.sock",
-                       "-v", "/root/powerstrip-config/adapters.yml:"
-                             "/etc/powerstrip/adapters.yml",
-                       "clusterhq/powerstrip:latest"])
-                print "Waiting for powerstrip to show up on", ip, "..."
+                # start powerstrip-flocker and powerstrip
                 self.powerstripflockers[ip] = remote_service_for_test(self, ip,
-                    ["docker", "run", "--net=host", "--name=powerstrip-flocker",
+                    ["docker", "run", "--name=powerstrip-flocker",
+                       "--expose", "80",
+                       "-p", "9999:80", # so that we can detect it being up
                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
                         # XXX change lmarsden to clusterhq before release, for
                         # automated builds (lmarsden is faster for pushing
                         # manual builds during testing)
                        "lmarsden/powerstrip-flocker:latest"])
                 print "Waiting for powerstrip-flocker to show up on", ip, "..."
+                self.powerstrips[ip] = remote_service_for_test(self, ip,
+                    ["docker", "run", "--name=powerstrip",
+                       "-p", "2375:2375",
+                       "-v", "/var/run/docker.sock:/var/run/docker.sock",
+                       "-v", "/root/powerstrip-config/adapters.yml:"
+                             "/etc/powerstrip/adapters.yml",
+                       "--link", "powerstrip-flocker:powerstrip-flocker",
+                       "clusterhq/powerstrip:latest"])
+                print "Waiting for powerstrip to show up on", ip, "..."
                 daemonReadyDeferreds.append(wait_for_socket(ip, 9999))
                 daemonReadyDeferreds.append(wait_for_socket(ip, 2375))
             d = defer.gatherResults(daemonReadyDeferreds)

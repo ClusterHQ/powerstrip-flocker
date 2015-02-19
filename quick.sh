@@ -9,6 +9,11 @@
 # 'lmarsden' or 'clusterhq' with your own repo here and in test_acceptance.py
 # if necessary):
 
-docker build -t lmarsden/powerstrip-flocker .
-docker push lmarsden/powerstrip-flocker
+# Run ./quick.sh --no-build to make it even quicker (if you've only changed the
+# acceptance test and not the actual adapter).
+
+if [ "$1" != "--no-build" ]; then
+    docker build -t lmarsden/powerstrip-flocker .
+    docker push lmarsden/powerstrip-flocker
+fi
 FLOCKER_ACCEPTANCE_NODES="172.16.255.240:172.16.255.241" trial powerstripflocker.test.test_acceptance
