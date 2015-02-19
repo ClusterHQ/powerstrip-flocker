@@ -174,7 +174,7 @@ def powerstrip(node, command, input=""):
     pipelines and such.
     """
     command = ["sh", "-c", "DOCKER_HOST=localhost:2375 " + command]
-    return shell(node, command, input)
+    return run(node, command, input)
 
 
 def shell(node, command, input=""):
@@ -184,7 +184,6 @@ def shell(node, command, input=""):
     """
     command = ["sh", "-c", command]
     result = run(node, command, input)
-    print "shell output from", node + ":", result
     return result
 
 
@@ -193,7 +192,10 @@ def run(node, command, input=""):
     Synchronously run a command (list of bytes) on a node's address (bytes)
     with optional input (bytes).
     """
-    return run_SSH(22, "root", node, command, input)
+    #print "Running", command, "on", node
+    result = run_SSH(22, "root", node, command, input)
+    #print "Output from", node + ":", result, "(%s)" % (command,)
+    return result
 
 
 def wait_for_socket(hostname, port):

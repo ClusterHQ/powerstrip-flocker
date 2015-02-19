@@ -1,15 +1,12 @@
 """
 Some Resources used by passthru.
 """
-from twisted.internet import defer
 from twisted.web import server, resource
 import json
-import treq
 import pprint
 import os
 
-# Gross hack to avoid threading sitejuggler through everywhere.
-theSiteJuggler = []
+BASE_URL = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
 
 class AdapterResource(resource.Resource):
     isLeaf = True
@@ -23,8 +20,17 @@ class AdapterResource(resource.Resource):
                 (requestJson["Type"],))
 
         pprint.pprint(os.environ)
-        self.sitejuggler = theSiteJuggler[0]
-
+        # BASE_URL like http://control-service/v1/ ^
+        jsonPayload = requestJson["ClientRequest"]["Body"]
+        jsonParsed = json.loads(jsonPayload)
+        request.write(json.dumps({
+            "PowerstripProtocolVersion": 1,
+            "ModifiedClientRequest": {
+                "Method": "POST",
+                "Request": request.uri,
+                "Body": json.dumps(jsonParsed)}}))
+        request.finish()
+        """
         jsonPayload = requestJson["ClientRequest"]["Body"]
         jsonParsed = json.loads(jsonPayload)
         gettingFilesystemsInPlace = []
@@ -79,4 +85,5 @@ class AdapterResource(resource.Resource):
                     "Body": json.dumps(newJson)}}))
             request.finish()
         dlist.addCallback(doneMoves)
+        """
         return server.NOT_DONE_YET
