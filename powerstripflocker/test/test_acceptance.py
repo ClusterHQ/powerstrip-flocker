@@ -34,15 +34,13 @@ import sys, os
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
 
-from twisted.trial.unittest import TestCase
-from flocker.acceptance.test_api import wait_for_cluster, remote_service_for_test
 from twisted.internet import defer
+from twisted.trial.unittest import TestCase
+import socket
 
-# NB run_SSH is a blocking API
+from flocker.acceptance.test_api import wait_for_cluster, remote_service_for_test
 from flocker.acceptance.testtools import run_SSH
 from flocker.testtools import loop_until
-
-import socket
 
 class PowerstripFlockerTests(TestCase):
     """
