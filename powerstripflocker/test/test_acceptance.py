@@ -106,7 +106,7 @@ adapters:
                 daemonReadyDeferreds.append(wait_for_socket(ip, 9999))
 
                 # start powerstrip
-                POWERSTRIP = "clusterhq/powerstrip-flocker:latest"
+                POWERSTRIP = "clusterhq/powerstrip:latest"
                 run(ip, ["docker", "pull", POWERSTRIP])
                 self.powerstrips[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--name=powerstrip",
@@ -174,7 +174,7 @@ def powerstrip(node, command, input=""):
     pipelines and such.
     """
     command = ["sh", "-c", "DOCKER_HOST=localhost:2375 " + command]
-    return run(node, command, input)
+    return shell(node, command, input)
 
 
 def shell(node, command, input=""):
@@ -183,7 +183,9 @@ def shell(node, command, input=""):
     pipelines and such.
     """
     command = ["sh", "-c", command]
-    return run(node, command, input)
+    result = run(node, command, input)
+    print "shell output from", node + ":", result
+    return result
 
 
 def run(node, command, input=""):
