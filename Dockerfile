@@ -14,12 +14,12 @@ RUN         apt-get -qy install libyaml-dev
 RUN         apt-get -qy install libffi-dev
 RUN         apt-get -qy install libssl-dev
 
+# Pre-install some requirements to make the next step hopefully faster
+RUN         pip install twisted==14.0.0 treq==0.2.1 service_identity pycrypto pyrsistent pyyaml==3.10
+
 ADD         . /app
 
 WORKDIR     /app
-
-# Pre-install some requirements to make the next step hopefully faster
-RUN         pip install twisted==14.0.0 treq==0.2.1 service_identity pycrypto pyrsistent pyyaml==3.10
 
 # Install requirements from the project's setup.py
 RUN         python setup.py install
