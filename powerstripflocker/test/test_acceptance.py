@@ -124,16 +124,35 @@ adapters:
         d.addCallback(got_cluster)
         return d
 
-    def test_get_a_cluster(self):
+    def test_create_a_dataset(self):
         """
-        * make Docker API requests to the hosts by running "docker" CLI
-          commands on them via Powerstrip
-        * assert that the desired flocker API actions have occurred
-          (either via zfs list or flocker API calls)
+        Running a docker container specifying a dataset name which has never
+        been created before creates it and a manifestation manifests.
         """
-        # at this point, we should have self.ips and powerstrip and
-        # powerstrip-flocker running...
-        import pdb; pdb.set_trace()
+        pass
+
+    def test_move_a_dataset(self):
+        """
+        Running a docker container specifying a dataset name which has been
+        created before but which is no longer running moves the dataset before
+        starting the container.
+        """
+        pass
+
+    def test_move_a_dataset_check_persistence(self):
+        """
+        The data in the dataset between the initial instantiation of it and the
+        second instantiation of it persists.
+        """
+        pass
+
+    def test_dataset_is_not_moved_when_being_used(self):
+        """
+        If a container is currently running with a dataset mounted, an error is
+        reported rather than ripping it out from underneath a running
+        container.
+        """
+        pass
 
 
 def run(node, command, input=""):

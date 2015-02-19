@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-# First run:
-#   vagrant box add http://build.clusterhq.com/results/vagrant/master/flocker-tutorial.json
-#   admin/run-powerstrip-acceptance-tests --keep --distribution=fedora-20 powerstripflocker.test.test_acceptance
+# First run (do this manually):
+# $ vagrant box add \
+#       http://build.clusterhq.com/results/vagrant/master/flocker-tutorial.json
+# $ admin/run-powerstrip-acceptance-tests \
+#       --keep --distribution=fedora-20 powerstripflocker.test.test_acceptance
 # This will set up some VMs, which will take a while.
 
 # Then you can run the following to do fast development cycles (replace
