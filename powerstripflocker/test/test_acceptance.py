@@ -93,17 +93,21 @@ endpoints:
 adapters:
   flocker: http://powerstrip-flocker/flocker-adapter
 """)
-                # start powerstrip-flocker and powerstrip
+                # start powerstrip-flocker
+                POWERSTRIP_FLOCKER = "%s/powerstrip-flocker:latest" % (DOCKER_PULL_REPO,)
+                run(ip, ["docker", "pull", POWERSTRIP_FLOCKER])
                 self.powerstripflockers[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--name=powerstrip-flocker",
                        "--expose", "80",
                        "-p", "9999:80", # so that we can detect it being up
                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
-                        # XXX change lmarsden to clusterhq before release, for
-                        # automated builds (lmarsden is faster for pushing
-                        # manual builds during testing)
-                       "%s/powerstrip-flocker:latest" % (DOCKER_PULL_REPO,)])
+                       POWERSTRIP_FLOCKER])
                 print "Waiting for powerstrip-flocker to show up on", ip, "..."
+                daemonReadyDeferreds.append(wait_for_socket(ip, 9999))
+
+                # start powerstrip
+                POWERSTRIP = "clusterhq/powerstrip-flocker:latest"
+                run(ip, ["docker", "pull", POWERSTRIP])
                 self.powerstrips[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--name=powerstrip",
                        "-p", "2375:2375",
@@ -111,10 +115,10 @@ adapters:
                        "-v", "/root/powerstrip-config/adapters.yml:"
                              "/etc/powerstrip/adapters.yml",
                        "--link", "powerstrip-flocker:powerstrip-flocker",
-                       "clusterhq/powerstrip:latest"])
+                       POWERSTRIP])
                 print "Waiting for powerstrip to show up on", ip, "..."
-                daemonReadyDeferreds.append(wait_for_socket(ip, 9999))
                 daemonReadyDeferreds.append(wait_for_socket(ip, 2375))
+
             d = defer.gatherResults(daemonReadyDeferreds)
             # def debug():
             #     services
@@ -129,7 +133,13 @@ adapters:
         Running a docker container specifying a dataset name which has never
         been created before creates it and a manifestation manifests.
         """
-        pass
+        node1, node2 = self.ips
+        result = powerstrip(node1, "docker run "
+                                   "-v /flocker/test001:/data busybox "
+                                   "sh -c 'cat 1 > /data/file'")
+        print "*" * 80
+        print result
+        print "*" * 80
 
     def test_move_a_dataset(self):
         """
@@ -138,6 +148,7 @@ adapters:
         starting the container.
         """
         pass
+    test_move_a_dataset.skip = "not implemented yet"
 
     def test_move_a_dataset_check_persistence(self):
         """
@@ -145,6 +156,7 @@ adapters:
         second instantiation of it persists.
         """
         pass
+    test_move_a_dataset_check_persistence.skip = "not implemented yet"
 
     def test_dataset_is_not_moved_when_being_used(self):
         """
@@ -153,6 +165,25 @@ adapters:
         container.
         """
         pass
+    test_dataset_is_not_moved_when_being_used.skip = "not implemented yet"
+
+
+def powerstrip(node, command, input=""):
+    """
+    Run a command in a shell on a remote host. Useful for defining env vars,
+    pipelines and such.
+    """
+    command = ["sh", "-c", "DOCKER_HOST=localhost:2375 " + command]
+    return run(node, command, input)
+
+
+def shell(node, command, input=""):
+    """
+    Run a command in a shell on a remote host. Useful for defining env vars,
+    pipelines and such.
+    """
+    command = ["sh", "-c", command]
+    return run(node, command, input)
 
 
 def run(node, command, input=""):

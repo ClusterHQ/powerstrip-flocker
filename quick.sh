@@ -24,5 +24,5 @@ if [ "$1" != "--no-build" ]; then
 fi
 
 # Run the tests.
-FLOCKER_ACCEPTANCE_NODES="172.16.255.240:172.16.255.241"
+export FLOCKER_ACCEPTANCE_NODES="172.16.255.240:172.16.255.241"
 trial powerstripflocker.test.test_acceptance

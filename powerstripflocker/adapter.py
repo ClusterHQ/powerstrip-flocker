@@ -4,6 +4,9 @@ Some Resources used by passthru.
 from twisted.internet import defer
 from twisted.web import server, resource
 import json
+import treq
+import pprint
+import os
 
 # Gross hack to avoid threading sitejuggler through everywhere.
 theSiteJuggler = []
@@ -19,6 +22,7 @@ class AdapterResource(resource.Resource):
             raise Exception("unsupported hook type %s" %
                 (requestJson["Type"],))
 
+        pprint.pprint(os.environ)
         self.sitejuggler = theSiteJuggler[0]
 
         jsonPayload = requestJson["ClientRequest"]["Body"]
