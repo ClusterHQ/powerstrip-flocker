@@ -12,20 +12,20 @@ etc.
 Run these tests first time with:
 
 $ vagrant box add \
-        http://build.clusterhq.com/results/vagrant/master/flocker-tutorial.json
+      http://build.clusterhq.com/results/vagrant/master/flocker-tutorial.json
 $ admin/run-powerstrip-acceptance-tests \
-        --keep --distribution=fedora-20 powerstripflocker.test.test_acceptance
+      --keep --distribution=fedora-20 powerstripflocker.test.test_acceptance
 
 After that, you can do quick test runs with the following.
-
-If you haven't changed the server-side component:
+If you haven't changed the server-side component of powerstrip-flocker (ie, if
+you've only changed the acceptance test):
 
 $ ./quick.sh --no-build
 
-Otherwise:
+If you have changed powerstrip-flocker itself (and not just the acceptance
+test):
 
 $ ./quick.sh
-
 """
 
 # hack to ensure we import from flocker module in submodule (rather than a
@@ -42,28 +42,35 @@ from flocker.acceptance.test_api import wait_for_cluster, remote_service_for_tes
 from flocker.acceptance.testtools import run_SSH
 from flocker.testtools import loop_until
 
+# This refers to where to fetch the latest version of powerstrip-flocker from.
+# If you want faster development cycle than Docker automated builds allow you
+# can change it from "clusterhq" to your personal repo, and create a repo on
+# Docker hub called "powerstrip-flocker". Then modify $DOCKER_PULL_REPO in
+# quick.sh accordingly and use that script.
+DOCKER_PULL_REPO = "lmarsden"
+
 class PowerstripFlockerTests(TestCase):
     """
-    Some real tests against 
+    Real powerstrip-flocker tests against two nodes using the flocker
+    acceptance testing framework.
     """
 
+    # Slow builds because initial runs involve pulling some docker images
+    # (powerstrip, and powerstrip-flocker).
     timeout = 1200
 
     def setUp(self):
+        """
+        Ready the environment for tests which actually run docker against
+        powerstrip with powerstrip-flocker enabled.
+
+        * Log into each node in turn:
+          * Run powerstrip-flocker in docker
+          * Run powerstrip in docker
+        """
         d = wait_for_cluster(self, 2)
         def got_cluster(cluster):
             self.cluster = cluster
-            # control service is on self.base_url...
-            # ips on [n.address for n in cluster.nodes]
-            # what to do next:
-            # * log into each node in turn:
-            #   * docker run -e "CONTROL_SERVICE_API=%(self.base_url)" \
-            #       clusterhq/powerstrip-flocker
-            #   * docker run [...] clusterhq/powerstrip
-            # * make Docker API requests to the hosts by running "docker" CLI
-            #   commands on them via Powerstrip
-            # * assert that the desired flocker API actions have occurred
-            #   (either via zfs list or flocker API calls)
             self.powerstripflockers = {}
             self.powerstrips = {}
             daemonReadyDeferreds = []
@@ -98,7 +105,7 @@ adapters:
                         # XXX change lmarsden to clusterhq before release, for
                         # automated builds (lmarsden is faster for pushing
                         # manual builds during testing)
-                       "lmarsden/powerstrip-flocker:latest"])
+                       "%s/powerstrip-flocker:latest" % (DOCKER_PULL_REPO,)])
                 print "Waiting for powerstrip-flocker to show up on", ip, "..."
                 self.powerstrips[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--name=powerstrip",
@@ -121,6 +128,12 @@ adapters:
         return d
 
     def test_get_a_cluster(self):
+        """
+        * make Docker API requests to the hosts by running "docker" CLI
+          commands on them via Powerstrip
+        * assert that the desired flocker API actions have occurred
+          (either via zfs list or flocker API calls)
+        """
         # at this point, we should have self.ips and powerstrip and
         # powerstrip-flocker running...
         import pdb; pdb.set_trace()
@@ -135,7 +148,8 @@ def run(node, command, input=""):
 
 
 def wait_for_socket(hostname, port):
-    # TODO: upstream this modified version into flocker
+    # TODO: upstream this modified version into flocker (it was copied from
+    # flocker.acceptance.test_api)
     """
     Wait until REST API is available.
 
