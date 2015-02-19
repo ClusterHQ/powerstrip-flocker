@@ -15,8 +15,12 @@
 # This should match up with DOCKER_PULL_REPO in powerstripflocker/test/test_acceptance.py
 DOCKER_PULL_REPO="lmarsden"
 
+# Optionally do a docker build and push.
 if [ "$1" != "--no-build" ]; then
     docker build -t ${DOCKER_PULL_REPO}/powerstrip-flocker .
     docker push ${DOCKER_PULL_REPO}/powerstrip-flocker
 fi
-FLOCKER_ACCEPTANCE_NODES="172.16.255.240:172.16.255.241" trial powerstripflocker.test.test_acceptance
+
+# Run the tests.
+FLOCKER_ACCEPTANCE_NODES="172.16.255.240:172.16.255.241"
+trial powerstripflocker.test.test_acceptance

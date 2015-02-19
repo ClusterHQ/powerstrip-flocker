@@ -78,14 +78,11 @@ class PowerstripFlockerTests(TestCase):
             for ip in self.ips:
                 # cleanup after previous test runs
                 run(ip, ["pkill", "-f", "flocker"])
-                try:
-                    run(ip, ["docker", "rm", "-f", "powerstrip"])
-                except:
-                    pass
-                try:
-                    run(ip, ["docker", "rm", "-f", "powerstrip-flocker"])
-                except:
-                    pass
+                for proc in ("powerstrip", "powerstrip-flocker"):
+                    try:
+                        run(ip, ["docker", "rm", "-f", proc])
+                    except Exception:
+                        print proc, "was not running, not killed, OK."
                 # put a powerstrip config in place
                 run(ip, ["mkdir", "-p", "/root/powerstrip-config"])
                 run(ip, ["sh", "-c", "cat > /root/powerstrip-config/adapters.yml"], """
