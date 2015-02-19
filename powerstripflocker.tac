@@ -1,9 +1,7 @@
 # Copyright ClusterHQ Limited. See LICENSE file for details.
 
-from twisted.internet import reactor
-from twisted.internet.task import deferLater
 from twisted.web import server, resource
-import json
+from twisted.application import service, internet
 
 from powerstripflocker.adapter import AdapterResource
 
@@ -15,5 +13,5 @@ def getAdapter():
 
 application = service.Application("Powerstrip Flocker Adapter")
 
-adapterServer = internet.TCPServer(80, adapterAPI, interface='0.0.0.0')
+adapterServer = internet.TCPServer(80, getAdapter(), interface='0.0.0.0')
 adapterServer.setServiceParent(application)
