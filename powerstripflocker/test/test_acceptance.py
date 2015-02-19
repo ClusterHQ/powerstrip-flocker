@@ -37,6 +37,7 @@ sys.path.insert(0, FLOCKER_PATH)
 from twisted.internet import defer
 from twisted.trial.unittest import TestCase
 import socket
+import treq
 
 from flocker.acceptance.test_api import wait_for_cluster, remote_service_for_test
 from flocker.acceptance.testtools import run_SSH
@@ -131,15 +132,33 @@ adapters:
     def test_create_a_dataset(self):
         """
         Running a docker container specifying a dataset name which has never
-        been created before creates it and a manifestation manifests.
+        been created before creates it in the API.
         """
         node1, node2 = self.ips
         result = powerstrip(node1, "docker run "
                                    "-v /flocker/test001:/data busybox "
-                                   "sh -c 'cat 1 > /data/file'")
+                                   "sh -c 'echo 1 > /data/file'")
         print "*" * 80
         print result
         print "*" * 80
+        url = self.cluster.base_url + "/configuration/datasets"
+        print "connecting to:", url
+        d = treq.get(url)
+        d.addCallback(treq.json_content)
+        def verify(result):
+            self
+            import pdb; pdb.set_trace()
+        d.addBoth(verify)
+        return d
+
+    def test_create_a_dataset_manifests(self):
+        """
+        Running a docker container specifying a dataset name which has never
+        been created before creates it in the API and the manifestation
+        manifests as an actual mounted ZFS filesystem.
+        """
+        pass
+    test_create_a_dataset_manifests.skip = "not implemented yet"
 
     def test_move_a_dataset(self):
         """
