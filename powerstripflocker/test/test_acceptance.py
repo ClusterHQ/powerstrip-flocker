@@ -27,8 +27,7 @@ sys.path.insert(0, FLOCKER_PATH)
 
 from twisted.trial.unittest import TestCase
 from flocker.acceptance.test_api import wait_for_cluster, remote_service_for_test
-from twisted.internet.task import deferLater
-from twisted.internet import reactor, defer
+from twisted.internet import defer
 
 # NB run_SSH is a blocking API
 from flocker.acceptance.testtools import run_SSH
@@ -119,7 +118,10 @@ adapters:
                 self.powerstripflockers[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--net=host", "--name=powerstrip-flocker",
                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
-                       "clusterhq/powerstrip-flocker:latest"])
+                        # XXX change lmarsden to clusterhq before release, for
+                        # automated builds (lmarsden is faster for pushing
+                        # manual builds during testing)
+                       "lmarsden/powerstrip-flocker:latest"])
                 print "Waiting for powerstrip-flocker to show up on", ip, "..."
                 daemonReadyDeferreds.append(wait_for_socket(ip, 9999))
                 daemonReadyDeferreds.append(wait_for_socket(ip, 2375))

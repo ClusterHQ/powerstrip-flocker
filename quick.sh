@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# First run:
+#   vagrant box add http://build.clusterhq.com/results/vagrant/master/flocker-tutorial.json
+#   admin/run-powerstrip-acceptance-tests --keep --distribution=fedora-20 powerstripflocker.test.test_acceptance
+# This will set up some VMs, which will take a while.
+
+# Then you can run the following to do fast development cycles (replace
+# 'lmarsden' or 'clusterhq' with your own repo here and in test_acceptance.py
+# if necessary):
+
+docker build -t lmarsden/powerstrip-flocker .
+docker push lmarsden/powerstrip-flocker
+FLOCKER_ACCEPTANCE_NODES="172.16.255.240:172.16.255.241" trial powerstripflocker.test.test_acceptance
