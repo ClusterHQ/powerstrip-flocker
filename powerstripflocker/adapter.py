@@ -1,7 +1,6 @@
 """
 Some Resources used by passthru.
 """
-from HybridUtils import channelLog
 from twisted.internet import defer
 from twisted.web import server, resource
 import json
@@ -50,7 +49,7 @@ class AdapterResource(resource.Resource):
                     def doneCreate(ignored):
                         # fs should be in currentMaster, because if it didn't,
                         # we just created it
-                        channelLog("dockerapi", ">> currentMasters after create",
+                        print ("dockerapi", ">> currentMasters after create",
                                 repr(self.sitejuggler.currentMasters[fs]))
                         if self.sitejuggler.currentMasters[fs] != self.sitejuggler.ip:
                             return self.sitejuggler.emit_move_site_to_server(
