@@ -1,15 +1,29 @@
 """
 Some Resources used by passthru.
 """
+from twisted.internet import reactor
 from twisted.web import server, resource
 import json
 import pprint
 import os
 
+from twisted.web.client import Agent
+from treq.client import HTTPClient
+
 BASE_URL = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
 
 class AdapterResource(resource.Resource):
+    """
+    A powerstrip adapter which integrates Docker with Flocker for portable
+    volumes.
+    """
     isLeaf = True
+
+    def __init__(self, *args, **kw):
+        self.agent = Agent(reactor) # no connectionpool
+        self.client = HTTPClient(self.agent)
+        return resource.Resource.__init__(self, *args, **kw)
+
     def render_POST(self, request):
         """
         Handle a pre-hook: either create a filesystem, or move it in place.
@@ -23,17 +37,11 @@ class AdapterResource(resource.Resource):
         # BASE_URL like http://control-service/v1/ ^
         jsonPayload = requestJson["ClientRequest"]["Body"]
         jsonParsed = json.loads(jsonPayload)
-        request.write(json.dumps({
-            "PowerstripProtocolVersion": 1,
-            "ModifiedClientRequest": {
-                "Method": "POST",
-                "Request": request.uri,
-                "Body": json.dumps(jsonParsed)}}))
-        request.finish()
-        """
-        jsonPayload = requestJson["ClientRequest"]["Body"]
-        jsonParsed = json.loads(jsonPayload)
-        gettingFilesystemsInPlace = []
+
+        self.baseURL = os.environ("FLOCKER_CONTROL_SERVICE_BASE_URL")
+
+        # simplest possible implementation: always create a volume.
+        fsCreateDeferreds = []
         if jsonParsed['HostConfig']['Binds'] is not None:
             newJsonParsed = jsonParsed.copy()
             newBinds = []
@@ -42,7 +50,27 @@ class AdapterResource(resource.Resource):
                 if host_path.startswith("/flocker/"):
                     fs = host_path[len("/flocker/"):]
                     new_host_path = "/hcfs/%s" % (fs,)
+                    fsCreateDeferreds.append(
+                            self.client.post(self.baseURL + "/configuration/datasets",
+                                json.dumps({"primary": self.ip})))
                     newBinds.append("%s:%s" % (new_host_path, remainder))
+            # xxx
+        d = defer.gatherResults(fsCreateDeferreds)
+
+        d = self.client.get(self.baseURL + "/configuration/datasets")
+        def gotCreatedDatasets(currentDatasets):
+            # TODO: poll /v1/state/datasets until the dataset appears
+            request.write(json.dumps({
+                "PowerstripProtocolVersion": 1,
+                "ModifiedClientRequest": {
+                    "Method": "POST",
+                    "Request": request.uri,
+                    "Body": json.dumps(jsonParsed)}}))
+            request.finish()
+        d.addCallback(gotCurrentDatasets)
+        """
+        gettingFilesystemsInPlace = []
+        [...]
                     # TODO validation
                     if "/" in fs:
                         raise Exception("Not allowed flocker filesystems more than one level deep")

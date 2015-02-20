@@ -26,6 +26,10 @@ If you have changed powerstrip-flocker itself (and not just the acceptance
 test):
 
 $ ./quick.sh
+
+These tests have a propensity to fail unless you also change "MaxClients"
+setting higher than 10 (e.g. 100) in /etc/sshd_config on the nodes you're
+testing against.
 """
 
 # hack to ensure we import from flocker module in submodule (rather than a
@@ -34,10 +38,12 @@ import sys, os
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
 
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 from twisted.trial.unittest import TestCase
+from twisted.web.client import Agent
 import socket
 import treq
+from treq.client import HTTPClient
 
 from flocker.acceptance.test_api import wait_for_cluster, remote_service_for_test
 from flocker.acceptance.testtools import run_SSH
@@ -69,6 +75,8 @@ class PowerstripFlockerTests(TestCase):
           * Run powerstrip-flocker in docker
           * Run powerstrip in docker
         """
+        self.agent = Agent(reactor) # no connectionpool
+        self.client = HTTPClient(self.agent)
         d = wait_for_cluster(self, 2)
         def got_cluster(cluster):
             self.cluster = cluster
@@ -78,7 +86,7 @@ class PowerstripFlockerTests(TestCase):
             self.ips = [node.address for node in cluster.nodes]
             for ip in self.ips:
                 # cleanup after previous test runs
-                run(ip, ["pkill", "-f", "flocker"])
+                #run(ip, ["pkill", "-f", "flocker"])
                 for proc in ("powerstrip", "powerstrip-flocker"):
                     try:
                         run(ip, ["docker", "rm", "-f", proc])
@@ -143,22 +151,32 @@ adapters:
         print "*" * 80
         url = self.cluster.base_url + "/configuration/datasets"
         print "connecting to:", url
-        d = treq.get(url)
+        d = self.client.get(url)
         d.addCallback(treq.json_content)
         def verify(result):
-            self
-            import pdb; pdb.set_trace()
+            self.assertTrue(len(result) > 0)
         d.addBoth(verify)
         return d
 
     def test_create_a_dataset_manifests(self):
         """
         Running a docker container specifying a dataset name which has never
-        been created before creates it in the API and the manifestation
-        manifests as an actual mounted ZFS filesystem.
+        been created before creates the actual filesystem and doesn't start the
+        Docker container until after the filesystem has been procured and
+        mounted on the Docker host system, initially as an actual ZFS
+        filesystem.
         """
         pass
     test_create_a_dataset_manifests.skip = "not implemented yet"
+
+    def test_create_two_datasets_same_name(self):
+        """
+        The metadata stored about a dataset name is checked to make sure that
+        no two volumes with the same name are created.  (In fact, if two
+        volumes are created with the same name on the same host, it's actually
+        a shared volume.)
+        """
+    test_create_two_datasets_same_name.skip = "not implemented yet"
 
     def test_move_a_dataset(self):
         """
@@ -179,9 +197,9 @@ adapters:
 
     def test_dataset_is_not_moved_when_being_used(self):
         """
-        If a container is currently running with a dataset mounted, an error is
-        reported rather than ripping it out from underneath a running
-        container.
+        If a container (*any* container) is currently running with a dataset
+        mounted, an error is reported rather than ripping it out from
+        underneath a running container.
         """
         pass
     test_dataset_is_not_moved_when_being_used.skip = "not implemented yet"
