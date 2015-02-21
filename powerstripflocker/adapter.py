@@ -54,7 +54,8 @@ class AdapterResource(resource.Resource):
                     print "POST", self.baseURL + "/configuration/datasets",
                     print json.dumps({"primary": self.ip, "metadata": {"name": fs}})
                     d = self.client.post(self.baseURL + "/configuration/datasets",
-                            json.dumps({"primary": self.ip, "metadata": {"name": fs}}))
+                            json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
+                            headers={'Content-Type': ['application/json']})
                     d.addCallback(treq.json_content)
                     fsCreateDeferreds.append(d)
                     # newBinds.append("%s:%s" % (new_host_path, remainder))
