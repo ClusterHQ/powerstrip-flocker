@@ -38,7 +38,7 @@ class AdapterResource(resource.Resource):
         jsonPayload = requestJson["ClientRequest"]["Body"]
         jsonParsed = json.loads(jsonPayload)
 
-        self.baseURL = os.environ("FLOCKER_CONTROL_SERVICE_BASE_URL")
+        self.baseURL = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
 
         # simplest possible implementation: always create a volume.
         fsCreateDeferreds = []
