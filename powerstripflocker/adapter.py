@@ -9,6 +9,7 @@ import os
 
 from twisted.web.client import Agent
 from treq.client import HTTPClient
+import treq
 
 BASE_URL = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
 
@@ -52,9 +53,10 @@ class AdapterResource(resource.Resource):
                     # new_host_path = "/hcfs/%s" % (fs,)
                     print "POST", self.baseURL + "/configuration/datasets",
                     print json.dumps({"primary": self.ip, "metadata": {"name": fs}})
-                    fsCreateDeferreds.append(
-                            self.client.post(self.baseURL + "/configuration/datasets",
-                                json.dumps({"primary": self.ip, "metadata": {"name": fs}})))
+                    d = self.client.post(self.baseURL + "/configuration/datasets",
+                            json.dumps({"primary": self.ip, "metadata": {"name": fs}}))
+                    d.addCallback(treq.json_content)
+                    fsCreateDeferreds.append(d)
                     # newBinds.append("%s:%s" % (new_host_path, remainder))
             # xxx
         d = defer.gatherResults(fsCreateDeferreds)
