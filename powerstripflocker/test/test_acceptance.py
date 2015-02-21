@@ -105,17 +105,24 @@ adapters:
                 # start powerstrip-flocker
                 POWERSTRIP_FLOCKER = "%s/powerstrip-flocker:latest" % (DOCKER_PULL_REPO,)
                 run(ip, ["docker", "pull", POWERSTRIP_FLOCKER])
+                # TODO - come up with cleaner/nicer way of powerstrip-flocker
+                # being able to establish its own host uuid (or volume
+                # mountpoints), such as API calls.
+                host_uuid = run(ip, ["python", "-c", "import json; "
+                    "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
                 self.powerstripflockers[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--name=powerstrip-flocker",
                        "--expose", "80",
                        "-p", "9999:80", # so that we can detect it being up
                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
                        "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
+                       "-e", "MY_HOST_UUID=%s" % (host_uuid,),
                        POWERSTRIP_FLOCKER])
                 print "Waiting for powerstrip-flocker to show up on", ip, "..."
                 daemonReadyDeferreds.append(wait_for_socket(ip, 9999))
 
                 # start powerstrip
+                # TODO - use the new unix-socket powerstrip approach.
                 POWERSTRIP = "clusterhq/powerstrip:latest"
                 run(ip, ["docker", "pull", POWERSTRIP])
                 self.powerstrips[ip] = remote_service_for_test(self, ip,
@@ -143,32 +150,27 @@ adapters:
         Running a docker container specifying a dataset name which has never
         been created before creates it in the API.
         """
-        node1, node2 = self.ips
-        result = powerstrip(node1, "docker run "
-                                   "-v /flocker/test001:/data busybox "
-                                   "sh -c 'echo 1 > /data/file'")
-        print "*" * 80
-        print result
-        print "*" * 80
+        node1, node2 = sorted(self.ips)
+        fsName = "test001"
+        powerstrip(node1, "docker run "
+                          "-v /flocker/%s:/data busybox "
+                          "sh -c 'echo 1 > /data/file'" % (fsName,))
         url = self.cluster.base_url + "/configuration/datasets"
         print "connecting to:", url
         d = self.client.get(url)
         d.addCallback(treq.json_content)
         def verify(result):
-            print "=" * 80
-            pprint.pprint(result)
-            print "=" * 80
             self.assertTrue(len(result) > 0)
+            self.assertEqual(result[0]["metadata"], {"name": fsName})
+            self.assertEqual(result[0]["primary"], node1)
         d.addBoth(verify)
         return d
 
     def test_create_a_dataset_manifests(self):
         """
         Running a docker container specifying a dataset name which has never
-        been created before creates the actual filesystem and doesn't start the
-        Docker container until after the filesystem has been procured and
-        mounted on the Docker host system, initially as an actual ZFS
-        filesystem.
+        been created before creates the actual filesystem and mounts it in
+        place in time for the container to start.
         """
         pass
     test_create_a_dataset_manifests.skip = "not implemented yet"

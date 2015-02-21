@@ -11,8 +11,6 @@ from twisted.web.client import Agent
 from treq.client import HTTPClient
 import treq
 
-BASE_URL = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
-
 class AdapterResource(resource.Resource):
     """
     A powerstrip adapter which integrates Docker with Flocker for portable
@@ -41,6 +39,7 @@ class AdapterResource(resource.Resource):
 
         self.baseURL = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
         self.ip = os.environ.get("MY_NETWORK_IDENTITY")
+        self.hostUUID = os.environ.get("MY_HOST_UUID")
 
         # simplest possible implementation: always create a volume.
         fsCreateDeferreds = []
