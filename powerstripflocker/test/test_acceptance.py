@@ -156,7 +156,6 @@ adapters:
                           "-v /flocker/%s:/data busybox "
                           "sh -c 'echo 1 > /data/file'" % (fsName,))
         url = self.cluster.base_url + "/configuration/datasets"
-        print "connecting to:", url
         d = self.client.get(url)
         d.addCallback(treq.json_content)
         def verify(result):
@@ -171,9 +170,35 @@ adapters:
         Running a docker container specifying a dataset name which has never
         been created before creates the actual filesystem and mounts it in
         place in time for the container to start.
+
+        We can verify this by asking Docker for the information about which
+        volumes are *actually* mounted in the container, then going and
+        checking that the real volume path on the host contains the '1' written
+        to the 'file' file specified in the docker run command...
         """
-        pass
-    test_create_a_dataset_manifests.skip = "not implemented yet"
+        node1, node2 = sorted(self.ips)
+        fsName = "test001"
+        powerstrip(node1, "docker run "
+                          "-v /flocker/%s:/data busybox "
+                          "sh -c 'echo 1 > /data/file'" % (fsName,))
+        url = self.cluster.base_url + "/configuration/datasets"
+        d = self.client.get(url)
+        d.addCallback(treq.json_content)
+        def verify(result):
+            self.assertTrue(len(result) > 0)
+            self.assertEqual(result[0]["metadata"], {"name": fsName})
+            self.assertEqual(result[0]["primary"], node1)
+            # If powerstrip-flocker doesn't modify the bind-mount path to point
+            # to the actual flocker volume, then Docker creates the *directory*
+            # (not ZFS filesystem) /flocker/test001. This is incorrect
+            # behaviour, so assert that this hasn't happened.
+            catWrongFileOutput = run(node1, ["cat", "/flocker/test001/file"]).strip()
+            print "catWrongFileOutput", catWrongFileOutput
+            self.assertNotEqual(catWrongFileOutput, "1")
+            # TODO: should also assert that the file actually exists within a
+            # mounted ZFS filesystem here.
+        d.addBoth(verify)
+        return d
 
     def test_create_two_datasets_same_name(self):
         """
@@ -209,6 +234,16 @@ adapters:
         """
         pass
     test_dataset_is_not_moved_when_being_used.skip = "not implemented yet"
+
+    def test_two_datasets_one_move_one_create(self):
+        """
+        When a docker run command mentions two datasets, one which is currently
+        not running on another host, and another which is new, the new one gets
+        created and the extant one gets moved. Both operations complete before
+        the container is started.
+        """
+        pass
+    test_two_datasets_one_move_one_create.skip = "not implemented yet"
 
 
 def powerstrip(node, command, input=""):

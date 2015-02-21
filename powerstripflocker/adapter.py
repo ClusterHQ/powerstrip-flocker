@@ -50,15 +50,13 @@ class AdapterResource(resource.Resource):
                 if host_path.startswith("/flocker/"):
                     fs = host_path[len("/flocker/"):]
                     # new_host_path = "/hcfs/%s" % (fs,)
-                    print "POST", self.baseURL + "/configuration/datasets",
-                    print json.dumps({"primary": self.ip, "metadata": {"name": fs}})
                     d = self.client.post(self.baseURL + "/configuration/datasets",
                             json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
                             headers={'Content-Type': ['application/json']})
                     d.addCallback(treq.json_content)
                     fsCreateDeferreds.append(d)
                     # newBinds.append("%s:%s" % (new_host_path, remainder))
-            # xxx
+
         d = defer.gatherResults(fsCreateDeferreds)
         def gotCreatedDatasets(listNewDatasets):
             # TODO: poll /v1/state/datasets until the dataset appears
