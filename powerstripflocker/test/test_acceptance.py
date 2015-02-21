@@ -110,6 +110,7 @@ adapters:
                        "--expose", "80",
                        "-p", "9999:80", # so that we can detect it being up
                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
+                       "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
                        POWERSTRIP_FLOCKER])
                 print "Waiting for powerstrip-flocker to show up on", ip, "..."
                 daemonReadyDeferreds.append(wait_for_socket(ip, 9999))

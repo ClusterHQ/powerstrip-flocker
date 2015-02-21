@@ -39,6 +39,7 @@ class AdapterResource(resource.Resource):
         jsonParsed = json.loads(jsonPayload)
 
         self.baseURL = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
+        self.ip = os.environ.get("MY_NETWORK_IDENTITY")
 
         # simplest possible implementation: always create a volume.
         fsCreateDeferreds = []
