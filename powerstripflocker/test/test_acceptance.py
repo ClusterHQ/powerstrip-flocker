@@ -34,7 +34,7 @@ testing against.
 
 # hack to ensure we import from flocker module in submodule (rather than a
 # version of flocker that happens to be installed locally)
-import sys, os, pprint
+import sys, os
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
 
@@ -204,8 +204,8 @@ adapters:
         """
         The metadata stored about a dataset name is checked to make sure that
         no two volumes with the same name are created.  (In fact, if two
-        volumes are created with the same name on the same host, it's actually
-        a shared volume.)
+        volumes are created with the same name on the same host, it's a shared
+        volume.)
         """
     test_create_two_datasets_same_name.skip = "not implemented yet"
 
@@ -248,8 +248,8 @@ adapters:
 
 def powerstrip(node, command, input=""):
     """
-    Run a command in a shell on a remote host. Useful for defining env vars,
-    pipelines and such.
+    Run a docker command (byte string) through powerstrip, with optional input
+    (bytes).
     """
     command = ["sh", "-c", "DOCKER_HOST=localhost:2375 " + command]
     return run(node, command, input)
@@ -257,8 +257,8 @@ def powerstrip(node, command, input=""):
 
 def shell(node, command, input=""):
     """
-    Run a command in a shell on a remote host. Useful for defining env vars,
-    pipelines and such.
+    Run a command (byte string) in a shell on a remote host. Useful for
+    defining env vars, pipelines and such. With optional input (bytes).
     """
     command = ["sh", "-c", command]
     result = run(node, command, input)
@@ -280,12 +280,11 @@ def wait_for_socket(hostname, port):
     # TODO: upstream this modified version into flocker (it was copied from
     # flocker.acceptance.test_api)
     """
-    Wait until REST API is available.
+    Wait until remote TCP socket is available.
 
-    :param str hostname: The host where the control service is
-         running.
+    :param str hostname: The host where the remote service is running.
 
-    :return Deferred: Fires when REST API is available.
+    :return Deferred: Fires when socket is available.
     """
     def api_available():
         try:

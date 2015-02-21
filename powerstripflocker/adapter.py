@@ -1,6 +1,12 @@
 """
-Some Resources used by passthru.
+A Powerstrip adapter which integrates Docker with Flocker to enable portable
+volumes without wrapping Docker.
+
+See:
+* https://github.com/clusterhq/powerstrip
+* https://github.com/clusterhq/flocker
 """
+
 from twisted.internet import reactor, defer
 from twisted.web import server, resource
 import json
@@ -13,8 +19,7 @@ import treq
 
 class AdapterResource(resource.Resource):
     """
-    A powerstrip adapter which integrates Docker with Flocker for portable
-    volumes.
+    A powerstrip pre-hook for container create.
     """
     isLeaf = True
 
@@ -34,43 +39,69 @@ class AdapterResource(resource.Resource):
 
         pprint.pprint(os.environ)
         # BASE_URL like http://control-service/v1/ ^
-        jsonPayload = requestJson["ClientRequest"]["Body"]
-        jsonParsed = json.loads(jsonPayload)
+        json_payload = requestJson["ClientRequest"]["Body"]
+        json_parsed = json.loads(json_payload)
 
-        self.baseURL = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
+        self.base_url = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
         self.ip = os.environ.get("MY_NETWORK_IDENTITY")
-        self.hostUUID = os.environ.get("MY_HOST_UUID")
+        self.host_uuid = os.environ.get("MY_HOST_UUID")
+
+        def wait_until_volume_created(result, fs):
+            """
+            Called after a dataset has been created in the cluster's desired
+            configuration. Wait until the volume shows up in the cluster actual
+            state.
+
+            :return: Deferred which fires with the tuple (dataset_id, fs) --
+                that is, the dataset uuid and the corresponding filesystem that
+                the docker client asked for -- once the filesystem has been
+                created and mounted (iow, exists in the cluster state).
+            """
+            dataset_id = result["dataset_id"]
+            def dataset_exists():
+                d = self.agent.get(self.base_url + "/state/datasets")
+                d.addCallback(treq.json_content)
+                def check_dataset_exists(datasets):
+                    for dataset in datasets:
+                        if dataset["dataset_id"] == dataset_id:
+                            return True
+                    return False
+                d.addCallback(check_dataset_exists)
+                return d
+            d = loop_until(dataset_exists)
+            d.addCallback(lambda ignored: (dataset_id, fs))
+            return d
 
         # simplest possible implementation: always create a volume.
-        fsCreateDeferreds = []
-        if jsonParsed['HostConfig']['Binds'] is not None:
-            # newBinds = []
-            for bind in jsonParsed['HostConfig']['Binds']:
+        fs_create_deferreds = []
+        if json_parsed['HostConfig']['Binds'] is not None:
+            for bind in json_parsed['HostConfig']['Binds']:
                 host_path, remainder = bind.split(":", 1)
                 if host_path.startswith("/flocker/"):
                     fs = host_path[len("/flocker/"):]
-                    # new_host_path = "/hcfs/%s" % (fs,)
-                    d = self.client.post(self.baseURL + "/configuration/datasets",
-                            json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
-                            headers={'Content-Type': ['application/json']})
+                    d = self.client.post(self.base_url + "/configuration/datasets",
+                        json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
+                        headers={'Content-Type': ['application/json']})
                     d.addCallback(treq.json_content)
-                    fsCreateDeferreds.append(d)
-                    # newBinds.append("%s:%s" % (new_host_path, remainder))
+                    d.addCallback(wait_until_volume_created, fs=fs)
+                    fs_create_deferreds.append(d)
 
-        d = defer.gatherResults(fsCreateDeferreds)
-        def gotCreatedDatasets(listNewDatasets):
-            # TODO: poll /v1/state/datasets until the dataset appears
+        d = defer.gatherResults(fs_create_deferreds)
+        def got_created_datasets(list_new_datasets): # TODO this might become got_created_and_moved_datasets
             print "<" * 80
-            pprint.pprint(listNewDatasets)
+            pprint.pprint(list_new_datasets)
             print "<" * 80
+            # newBinds = []
+            # new_host_path = "/hcfs/%s" % (fs,)
+            # newBinds.append("%s:%s" % (new_host_path, remainder))
             request.write(json.dumps({
                 "PowerstripProtocolVersion": 1,
                 "ModifiedClientRequest": {
                     "Method": "POST",
                     "Request": request.uri,
-                    "Body": json.dumps(jsonParsed)}}))
+                    "Body": json.dumps(json_parsed)}}))
             request.finish()
-        d.addCallback(gotCreatedDatasets)
+        d.addCallback(got_created_datasets)
         """
         gettingFilesystemsInPlace = []
         [...]
@@ -117,3 +148,28 @@ class AdapterResource(resource.Resource):
         dlist.addCallback(doneMoves)
         """
         return server.NOT_DONE_YET
+
+
+# borrowed from flocker.testtools
+from twisted.internet.defer import maybeDeferred
+from twisted.internet.task import deferLater
+
+def loop_until(predicate):
+    """Call predicate every 0.1 seconds, until it returns something ``Truthy``.
+
+    :param predicate: Callable returning termination condition.
+    :type predicate: 0-argument callable returning a Deferred.
+
+    :return: A ``Deferred`` firing with the first ``Truthy`` response from
+        ``predicate``.
+    """
+    d = maybeDeferred(predicate)
+
+    def loop(result):
+        if not result:
+            d = deferLater(reactor, 0.1, predicate)
+            d.addCallback(loop)
+            return d
+        return result
+    d.addCallback(loop)
+    return d
