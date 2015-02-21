@@ -34,7 +34,7 @@ testing against.
 
 # hack to ensure we import from flocker module in submodule (rather than a
 # version of flocker that happens to be installed locally)
-import sys, os
+import sys, os, pprint
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
 
@@ -154,6 +154,9 @@ adapters:
         d = self.client.get(url)
         d.addCallback(treq.json_content)
         def verify(result):
+            print "=" * 80
+            pprint.pprint(result)
+            print "=" * 80
             self.assertTrue(len(result) > 0)
         d.addBoth(verify)
         return d

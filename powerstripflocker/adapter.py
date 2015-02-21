@@ -1,7 +1,7 @@
 """
 Some Resources used by passthru.
 """
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from twisted.web import server, resource
 import json
 import pprint
@@ -43,23 +43,23 @@ class AdapterResource(resource.Resource):
         # simplest possible implementation: always create a volume.
         fsCreateDeferreds = []
         if jsonParsed['HostConfig']['Binds'] is not None:
-            newJsonParsed = jsonParsed.copy()
-            newBinds = []
+            # newBinds = []
             for bind in jsonParsed['HostConfig']['Binds']:
                 host_path, remainder = bind.split(":", 1)
                 if host_path.startswith("/flocker/"):
                     fs = host_path[len("/flocker/"):]
-                    new_host_path = "/hcfs/%s" % (fs,)
+                    # new_host_path = "/hcfs/%s" % (fs,)
                     fsCreateDeferreds.append(
                             self.client.post(self.baseURL + "/configuration/datasets",
-                                json.dumps({"primary": self.ip})))
-                    newBinds.append("%s:%s" % (new_host_path, remainder))
+                                json.dumps({"primary": self.ip, "metadata": {"name": fs}})))
+                    # newBinds.append("%s:%s" % (new_host_path, remainder))
             # xxx
         d = defer.gatherResults(fsCreateDeferreds)
-
-        d = self.client.get(self.baseURL + "/configuration/datasets")
-        def gotCreatedDatasets(currentDatasets):
+        def gotCreatedDatasets(listNewDatasets):
             # TODO: poll /v1/state/datasets until the dataset appears
+            print "<" * 80
+            pprint.pprint(listNewDatasets)
+            print "<" * 80
             request.write(json.dumps({
                 "PowerstripProtocolVersion": 1,
                 "ModifiedClientRequest": {
@@ -67,7 +67,7 @@ class AdapterResource(resource.Resource):
                     "Request": request.uri,
                     "Body": json.dumps(jsonParsed)}}))
             request.finish()
-        d.addCallback(gotCurrentDatasets)
+        d.addCallback(gotCreatedDatasets)
         """
         gettingFilesystemsInPlace = []
         [...]
@@ -100,7 +100,6 @@ class AdapterResource(resource.Resource):
                     d.addCallback(checkInPlace)
                     gettingFilesystemsInPlace.append(d)
             newJsonParsed['HostConfig']['Binds'] = newBinds
-            newJson = json.dumps(newJsonParsed)
         # outside the loop now; XXX check that gatherResults fails on any error
         print 'getting filesystems in place:', gettingFilesystemsInPlace
         dlist = defer.gatherResults(gettingFilesystemsInPlace)
