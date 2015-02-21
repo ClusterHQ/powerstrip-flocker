@@ -49,6 +49,8 @@ class AdapterResource(resource.Resource):
                 if host_path.startswith("/flocker/"):
                     fs = host_path[len("/flocker/"):]
                     # new_host_path = "/hcfs/%s" % (fs,)
+                    print "POST", self.baseURL + "/configuration/datasets",
+                    print json.dumps({"primary": self.ip, "metadata": {"name": fs}})
                     fsCreateDeferreds.append(
                             self.client.post(self.baseURL + "/configuration/datasets",
                                 json.dumps({"primary": self.ip, "metadata": {"name": fs}})))
