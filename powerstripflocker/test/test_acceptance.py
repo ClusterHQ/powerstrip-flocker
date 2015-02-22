@@ -34,7 +34,7 @@ testing against.
 
 # hack to ensure we import from flocker module in submodule (rather than a
 # version of flocker that happens to be installed locally)
-import sys, os
+import sys, os, json
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
 
@@ -178,9 +178,9 @@ adapters:
         """
         node1, node2 = sorted(self.ips)
         fsName = "test001"
-        powerstrip(node1, "docker run "
-                          "-v /flocker/%s:/data busybox "
-                          "sh -c 'echo 1 > /data/file'" % (fsName,))
+        container_id = powerstrip(node1, "docker run -d "
+                                         "-v /flocker/%s:/data busybox "
+                                         "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
         url = self.cluster.base_url + "/configuration/datasets"
         d = self.client.get(url)
         d.addCallback(treq.json_content)
@@ -188,15 +188,16 @@ adapters:
             self.assertTrue(len(result) > 0)
             self.assertEqual(result[0]["metadata"], {"name": fsName})
             self.assertEqual(result[0]["primary"], node1)
-            # If powerstrip-flocker doesn't modify the bind-mount path to point
-            # to the actual flocker volume, then Docker creates the *directory*
-            # (not ZFS filesystem) /flocker/test001. This is incorrect
-            # behaviour, so assert that this hasn't happened.
-            catWrongFileOutput = run(node1, ["cat", "/flocker/test001/file"]).strip()
-            print "catWrongFileOutput", catWrongFileOutput
-            self.assertNotEqual(catWrongFileOutput, "1")
-            # TODO: should also assert that the file actually exists within a
-            # mounted ZFS filesystem here.
+            # The volume that Docker now has mounted...
+            docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id]))
+            volume = docker_inspect["Volumes"].items()[0]
+            # ... exists as a ZFS volume...
+            zfs_volumes = shell(node1, "zfs list -t snapshot,filesystem -r flocker "
+                                       "|grep %s |wc -l" % (volume,)).strip()
+            self.assertEqual(int(zfs_volumes), 1)
+            # ... and contains a file which contains the characters "fish".
+            catFileOutput = run(node1, ["cat", "%s/file" % (volume,)]).strip()
+            self.assertEqual(catFileOutput, "1")
         d.addBoth(verify)
         return d
 
