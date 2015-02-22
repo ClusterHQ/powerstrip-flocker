@@ -74,8 +74,7 @@ class AdapterResource(resource.Resource):
                     print "Got", self.ip, "datasets:", datasets
                     matching_datasets = []
                     for dataset in datasets:
-                        matching = dataset["dataset_id"] == dataset_id
-                        if matching:
+                        if dataset["dataset_id"] == dataset_id:
                             matching_datasets.append(dataset)
                     if len(matching_datasets) == 1:
                         if matching_datasets[0]["primary"] == self.ip:
