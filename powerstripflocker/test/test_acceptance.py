@@ -223,8 +223,17 @@ adapters:
         created before but which is no longer running moves the dataset before
         starting the container.
         """
-        pass
-    test_move_a_dataset.skip = "not implemented yet"
+        node1, node2 = sorted(self.ips)
+        fsName = "test001"
+        # Write some bytes to a volume on one host...
+        powerstrip(node1, "docker run -i "
+                          "-v /flocker/%s:/data busybox "
+                          "sh -c 'echo chicken > /data/file'" % (fsName,)).strip()
+        # ... and read them from the same named volume on another...
+        result = powerstrip(node2, "docker run -i "
+                                   "-v /flocker/%s:/data busybox "
+                                   "sh -c 'cat /data/file'" % (fsName,)).strip()
+        self.assertEqual(result, "chicken")
 
     def test_move_a_dataset_check_persistence(self):
         """
