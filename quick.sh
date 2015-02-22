@@ -25,4 +25,4 @@ fi
 
 # Run the tests.
 export FLOCKER_ACCEPTANCE_NODES="172.16.255.240:172.16.255.241"
-trial powerstripflocker.test.test_acceptance
+trial ${2:-powerstripflocker.test.test_acceptance}
