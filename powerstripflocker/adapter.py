@@ -65,11 +65,20 @@ class AdapterResource(resource.Resource):
                 d = self.client.get(self.base_url + "/state/datasets")
                 d.addCallback(treq.json_content)
                 def check_dataset_exists(datasets):
+                    """
+                    The /v1/state/datasets API seems to show the volume as
+                    being on two hosts at once during a move. We assume
+                    therefore that when it settles down to only show it on one
+                    host that this means the move is complete.
+                    """
                     print "Got", self.ip, "datasets:", datasets
+                    matching_datasets = []
                     for dataset in datasets:
                         matching = dataset["dataset_id"] == dataset_id
-                        here = dataset["primary"] == self.ip
-                        if matching and here:
+                        if matching:
+                            matching_datasets.append(dataset)
+                    if len(matching_datasets) == 1:
+                        if matching_datasets[0]["primary"] == self.ip:
                             return True
                     return False
                 d.addCallback(check_dataset_exists)
