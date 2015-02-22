@@ -52,10 +52,11 @@ class AdapterResource(resource.Resource):
             configuration. Wait until the volume shows up in the cluster actual
             state.
 
-            :return: Deferred which fires with the tuple (dataset_id, fs) --
-                that is, the dataset uuid and the corresponding filesystem that
-                the docker client asked for -- once the filesystem has been
-                created and mounted (iow, exists in the cluster state).
+            :return: Deferred which fires with the tuple (fs, dataset_id) --
+                that is, the filesystem and the corresponding flocker dataset
+                uuid that the docker client asked for -- firing only once the
+                filesystem has been created and mounted (iow, exists in the
+                cluster state).
             """
             dataset_id = result["dataset_id"]
             def dataset_exists():
@@ -69,16 +70,18 @@ class AdapterResource(resource.Resource):
                 d.addCallback(check_dataset_exists)
                 return d
             d = loop_until(dataset_exists)
-            d.addCallback(lambda ignored: (dataset_id, fs))
+            d.addCallback(lambda ignored: (fs, dataset_id))
             return d
 
         # simplest possible implementation: always create a volume.
         fs_create_deferreds = []
+        old_binds = []
         if json_parsed['HostConfig']['Binds'] is not None:
             for bind in json_parsed['HostConfig']['Binds']:
                 host_path, remainder = bind.split(":", 1)
                 if host_path.startswith("/flocker/"):
                     fs = host_path[len("/flocker/"):]
+                    old_binds.append((fs, remainder))
                     d = self.client.post(self.base_url + "/configuration/datasets",
                         json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
                         headers={'Content-Type': ['application/json']})
@@ -88,18 +91,25 @@ class AdapterResource(resource.Resource):
 
         d = defer.gatherResults(fs_create_deferreds)
         def got_created_datasets(list_new_datasets): # TODO this might become got_created_and_moved_datasets
-            print "<" * 80
-            pprint.pprint(list_new_datasets)
-            print "<" * 80
-            # newBinds = []
+            dataset_mapping = dict(list_new_datasets)
+            new_binds = []
+            for fs, reminder in old_binds:
+                new_binds.append("/flocker/%s.default.%s:%s" %
+                        (self.host_uuid, dataset_mapping[fs], remainder))
+            new_json_parsed = json_parsed.copy()
+            new_json_parsed['HostConfig']['Binds'] = new_binds
+            # new_binds = []
             # new_host_path = "/hcfs/%s" % (fs,)
-            # newBinds.append("%s:%s" % (new_host_path, remainder))
+            # new_binds.append("%s:%s" % (new_host_path, remainder))
+            print "<" * 80
+            pprint.pprint(new_binds)
+            print "<" * 80
             request.write(json.dumps({
                 "PowerstripProtocolVersion": 1,
                 "ModifiedClientRequest": {
                     "Method": "POST",
                     "Request": request.uri,
-                    "Body": json.dumps(json_parsed)}}))
+                    "Body": json.dumps(new_json_parsed)}}))
             request.finish()
         d.addCallback(got_created_datasets)
         """

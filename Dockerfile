@@ -16,7 +16,8 @@ RUN         apt-get -qy update && \
 # Pre-install some requirements to make the next step hopefully faster
             pip install twisted==14.0.0 treq==0.2.1 service_identity pycrypto pyrsistent pyyaml==3.10
 
-ADD         . /app
+ADD         powerstripflocker.tac setup.py README.md /app/
+ADD         powerstripflocker/* /app/powerstripflocker/
 
 WORKDIR     /app
 
