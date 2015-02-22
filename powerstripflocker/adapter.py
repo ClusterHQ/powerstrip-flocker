@@ -65,6 +65,7 @@ class AdapterResource(resource.Resource):
                 d = self.client.get(self.base_url + "/state/datasets")
                 d.addCallback(treq.json_content)
                 def check_dataset_exists(datasets):
+                    print "Got", self.ip, "datasets:", datasets
                     for dataset in datasets:
                         matching = dataset["dataset_id"] == dataset_id
                         here = dataset["primary"] == self.ip
