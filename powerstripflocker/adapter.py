@@ -9,6 +9,7 @@ See:
 
 from twisted.internet import reactor, defer
 from twisted.web import server, resource
+from twisted.python import log
 import json
 import pprint
 import os
@@ -64,6 +65,7 @@ class AdapterResource(resource.Resource):
                 d.addCallback(treq.json_content)
                 def check_dataset_exists(datasets):
                     for dataset in datasets:
+                        # TODO if dataset["primary'] == self.ip and ...
                         if dataset["dataset_id"] == dataset_id:
                             return True
                     return False
@@ -73,45 +75,61 @@ class AdapterResource(resource.Resource):
             d.addCallback(lambda ignored: (fs, dataset_id))
             return d
 
-        # simplest possible implementation: always create a volume.
-        fs_create_deferreds = []
-        old_binds = []
-        if json_parsed['HostConfig']['Binds'] is not None:
-            for bind in json_parsed['HostConfig']['Binds']:
-                host_path, remainder = bind.split(":", 1)
-                if host_path.startswith("/flocker/"):
-                    fs = host_path[len("/flocker/"):]
-                    old_binds.append((fs, remainder))
-                    d = self.client.post(self.base_url + "/configuration/datasets",
-                        json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
-                        headers={'Content-Type': ['application/json']})
-                    d.addCallback(treq.json_content)
-                    d.addCallback(wait_until_volume_created, fs=fs)
-                    fs_create_deferreds.append(d)
+        d = self.client.get(self.base_url + "/configuration/datasets")
+        def got_dataset_configuration(configured_datasets):
+            # form a mapping from names onto dataset objects
+            configured_dataset_mapping = {}
+            for dataset in configured_datasets:
+                if dataset["metadata"].get("name"):
+                    configured_dataset_mapping[dataset["metadata"].get("name")] = dataset
 
-        d = defer.gatherResults(fs_create_deferreds)
-        def got_created_datasets(list_new_datasets): # TODO this might become got_created_and_moved_datasets
-            dataset_mapping = dict(list_new_datasets)
-            new_binds = []
-            for fs, reminder in old_binds:
-                new_binds.append("/flocker/%s.default.%s:%s" %
-                        (self.host_uuid, dataset_mapping[fs], remainder))
-            new_json_parsed = json_parsed.copy()
-            new_json_parsed['HostConfig']['Binds'] = new_binds
-            # new_binds = []
-            # new_host_path = "/hcfs/%s" % (fs,)
-            # new_binds.append("%s:%s" % (new_host_path, remainder))
-            print "<" * 80
-            pprint.pprint(new_binds)
-            print "<" * 80
-            request.write(json.dumps({
-                "PowerstripProtocolVersion": 1,
-                "ModifiedClientRequest": {
-                    "Method": "POST",
-                    "Request": request.uri,
-                    "Body": json.dumps(new_json_parsed)}}))
-            request.finish()
-        d.addCallback(got_created_datasets)
+            # iterate over the datasets we were asked to create by the docker client
+            fs_create_deferreds = []
+            old_binds = []
+            if json_parsed['HostConfig']['Binds'] is not None:
+                for bind in json_parsed['HostConfig']['Binds']:
+                    host_path, remainder = bind.split(":", 1)
+                    if host_path.startswith("/flocker/"):
+                        fs = host_path[len("/flocker/"):]
+                        old_binds.append((fs, remainder))
+                        # if a dataset exists, and is in the right place, we're cool.
+                        if fs in configured_dataset_mapping:
+                            dataset = configured_dataset_mapping[fs]
+                            if dataset["primary"] == self.ip:
+                                # simulate "immediate success"
+                                fs_create_deferreds.append(defer.succeed((fs, dataset["dataset_id"])))
+                            # if a dataset exists, but is on the wrong server [TODO
+                            # and is not being used], then move it in place.
+                            # TODO write the test for this case
+                        else:
+                            # if a dataset doesn't exist at all, create it on this server.
+                            d = self.client.post(self.base_url + "/configuration/datasets",
+                                json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
+                                headers={'Content-Type': ['application/json']})
+                            d.addCallback(treq.json_content)
+                            d.addCallback(wait_until_volume_created, fs=fs)
+                            fs_create_deferreds.append(d)
+
+            d = defer.gatherResults(fs_create_deferreds)
+            def got_created_datasets(list_new_datasets): # TODO this might become got_created_and_moved_datasets
+                dataset_mapping = dict(list_new_datasets)
+                new_binds = []
+                for fs, reminder in old_binds:
+                    new_binds.append("/flocker/%s.default.%s:%s" %
+                            (self.host_uuid, dataset_mapping[fs], remainder))
+                new_json_parsed = json_parsed.copy()
+                new_json_parsed['HostConfig']['Binds'] = new_binds
+                request.write(json.dumps({
+                    "PowerstripProtocolVersion": 1,
+                    "ModifiedClientRequest": {
+                        "Method": "POST",
+                        "Request": request.uri,
+                        "Body": json.dumps(new_json_parsed)}}))
+                request.finish()
+            d.addCallback(got_created_datasets)
+            return d
+        d.addCallback(got_dataset_configuration)
+        d.addErrback(log.err, 'while processing configured datasets')
         """
         gettingFilesystemsInPlace = []
         [...]

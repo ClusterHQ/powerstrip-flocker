@@ -181,22 +181,16 @@ adapters:
         container_id = powerstrip(node1, "docker run -d "
                                          "-v /flocker/%s:/data busybox "
                                          "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
-        url = self.cluster.base_url + "/configuration/datasets"
-        d = self.client.get(url)
-        d.addCallback(treq.json_content)
-        def verify(result):
-            # The volume that Docker now has mounted...
-            docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id]))
-            volume = docker_inspect[0]["Volumes"].values()[0]
-            # ... exists as a ZFS volume...
-            zfs_volumes = shell(node1, "zfs list -t snapshot,filesystem -r flocker "
-                                       "|grep %s |wc -l" % (volume,)).strip()
-            self.assertEqual(int(zfs_volumes), 1)
-            # ... and contains a file which contains the characters "fish".
-            catFileOutput = run(node1, ["cat", "%s/file" % (volume,)]).strip()
-            self.assertEqual(catFileOutput, "fish")
-        d.addBoth(verify)
-        return d
+        # The volume that Docker now has mounted...
+        docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id]))
+        volume = docker_inspect[0]["Volumes"].values()[0]
+        # ... exists as a ZFS volume...
+        zfs_volumes = shell(node1, "zfs list -t snapshot,filesystem -r flocker "
+                                   "|grep %s |wc -l" % (volume,)).strip()
+        self.assertEqual(int(zfs_volumes), 1)
+        # ... and contains a file which contains the characters "fish".
+        catFileOutput = run(node1, ["cat", "%s/file" % (volume,)]).strip()
+        self.assertEqual(catFileOutput, "fish")
 
     def test_create_two_datasets_same_name(self):
         """
@@ -205,7 +199,23 @@ adapters:
         volumes are created with the same name on the same host, it's a shared
         volume.)
         """
-    test_create_two_datasets_same_name.skip = "not implemented yet"
+        node1, node2 = sorted(self.ips)
+        fsName = "test001"
+        # First volume...
+        container_id_1 = powerstrip(node1, "docker run -d "
+                                           "-v /flocker/%s:/data busybox "
+                                           "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+        docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_1]))
+        volume_1 = docker_inspect[0]["Volumes"].values()[0]
+
+        # Second volume...
+        container_id_2 = powerstrip(node1, "docker run -d "
+                                           "-v /flocker/%s:/data busybox "
+                                           "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+        docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_2]))
+        volume_2 = docker_inspect[0]["Volumes"].values()[0]
+        # ... have the same flocker UUID.
+        self.assertEqual(volume_1, volume_2)
 
     def test_move_a_dataset(self):
         """
