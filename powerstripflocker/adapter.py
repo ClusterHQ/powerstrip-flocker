@@ -76,6 +76,7 @@ class AdapterResource(resource.Resource):
             return d
 
         d = self.client.get(self.base_url + "/configuration/datasets")
+        d.addCallback(treq.json_content)
         def got_dataset_configuration(configured_datasets):
             # form a mapping from names onto dataset objects
             configured_dataset_mapping = {}
