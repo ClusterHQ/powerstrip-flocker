@@ -226,14 +226,15 @@ adapters:
         node1, node2 = sorted(self.ips)
         fsName = "test001"
         # Write some bytes to a volume on one host...
-        powerstrip(node1, "docker run -i "
+        powerstrip(node1, "docker run "
                           "-v /flocker/%s:/data busybox "
-                          "sh -c 'echo chicken > /data/file'" % (fsName,)).strip()
+                          "sh -c 'echo chicken > /data/file'" % (fsName,))
         # ... and read them from the same named volume on another...
-        result = powerstrip(node2, "docker run -i "
-                                   "-v /flocker/%s:/data busybox "
-                                   "sh -c 'cat /data/file'" % (fsName,)).strip()
-        self.assertEqual(result, "chicken")
+        container_id = powerstrip(node2, "docker run -d "
+                                         "-v /flocker/%s:/data busybox "
+                                         "sh -c 'cat /data/file'" % (fsName,)).strip()
+        output = run(node2, ["docker", "logs", container_id])
+        self.assertEqual(output.strip(), "chicken")
 
     def test_move_a_dataset_check_persistence(self):
         """
