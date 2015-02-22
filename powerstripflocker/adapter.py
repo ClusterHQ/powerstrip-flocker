@@ -24,8 +24,8 @@ class AdapterResource(resource.Resource):
     isLeaf = True
 
     def __init__(self, *args, **kw):
-        self.agent = Agent(reactor) # no connectionpool
-        self.client = HTTPClient(self.agent)
+        self._agent = Agent(reactor) # no connectionpool
+        self.client = HTTPClient(self._agent)
         return resource.Resource.__init__(self, *args, **kw)
 
     def render_POST(self, request):
@@ -59,7 +59,7 @@ class AdapterResource(resource.Resource):
             """
             dataset_id = result["dataset_id"]
             def dataset_exists():
-                d = self.agent.get(self.base_url + "/state/datasets")
+                d = self.client.get(self.base_url + "/state/datasets")
                 d.addCallback(treq.json_content)
                 def check_dataset_exists(datasets):
                     for dataset in datasets:
