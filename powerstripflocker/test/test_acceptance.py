@@ -185,19 +185,16 @@ adapters:
         d = self.client.get(url)
         d.addCallback(treq.json_content)
         def verify(result):
-            self.assertTrue(len(result) > 0)
-            self.assertEqual(result[0]["metadata"], {"name": fsName})
-            self.assertEqual(result[0]["primary"], node1)
             # The volume that Docker now has mounted...
             docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id]))
-            volume = docker_inspect["Volumes"].items()[0]
+            volume = docker_inspect[0]["Volumes"].values()[0]
             # ... exists as a ZFS volume...
             zfs_volumes = shell(node1, "zfs list -t snapshot,filesystem -r flocker "
                                        "|grep %s |wc -l" % (volume,)).strip()
             self.assertEqual(int(zfs_volumes), 1)
             # ... and contains a file which contains the characters "fish".
             catFileOutput = run(node1, ["cat", "%s/file" % (volume,)]).strip()
-            self.assertEqual(catFileOutput, "1")
+            self.assertEqual(catFileOutput, "fish")
         d.addBoth(verify)
         return d
 
