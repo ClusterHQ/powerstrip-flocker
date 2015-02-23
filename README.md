@@ -2,6 +2,7 @@
 *or: how I learned to love running stateful containers in docker and stop worrying where the data is*
 
 ![flying books to illustrate portable volumes](resources/flying_books.jpg)
+
 (Portable "volumes", hee hee.)
 
 ## What is `powerstrip-flocker`?
