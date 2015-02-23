@@ -36,7 +36,7 @@ fish
 
 Finally you can run stateful containers in docker and stop worrying about where the data is.
 
-Note that powerstrip-flocker exposes a *global volume namespace*.
+In other words, `powerstrip-flocker` exposes a *global volume namespace*.
 
 ### Works with orchestration
 
