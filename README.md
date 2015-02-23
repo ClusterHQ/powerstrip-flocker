@@ -38,7 +38,7 @@ Note that the volume above has become "global" to both hosts.
 
 Finally you can run stateful containers in docker and stop worrying about where the data is.
 
-In other words, `powerstrip-flocker` exposes a *global volume namespace* (`/flocker/*`).
+In other words, `powerstrip-flocker` exposes a *global namespace* (`/flocker/*`) of volumes which flocker will move into place just-in-time before starting your containers.
 
 ## Orchestration
 
