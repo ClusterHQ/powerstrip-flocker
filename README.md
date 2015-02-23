@@ -16,7 +16,7 @@ You should be able to run a stateful container with a given volume on any host i
 
 ## What is `powerstrip-flocker`?
 
-`powerstrip-flocker` is a way of configuring docker which lets you use regular docker CLI commands to create or move flocker volumes, automatically moving volumes around between hosts in the cluster as-needed.
+`powerstrip-flocker` allows you to use the regular `docker` CLI commands to create or move flocker volumes, automatically moving volumes around between hosts in the cluster as-needed.
 
 ## How does it work?
 
