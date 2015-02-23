@@ -40,13 +40,28 @@ Finally you can run stateful containers in docker and stop worrying about where 
 
 In other words, `powerstrip-flocker` exposes a *global volume namespace* (`/flocker/*`).
 
-### Works with orchestration
+## Orchestration
 
-Because powerstrip speaks the Docker API, you can use powerstrip-flocker with your docker tools of choice, be it the plain ole' `docker` CLI, `swarm`, `mesosphere`, `kubernetes`, `fleet` or anything else that speaks the [Docker remote API](https://docs.docker.com/reference/api/docker_remote_api/).
+Because [powerstrip-flocker](https://github.com/ClusterHQ/powerstrip-flocker) presents a standard docker api - it means that the full gamut of orchestration tools can work with it:
 
-### Works with other prototypical extensions, e.g. networking
+ * [kubernetes](https://github.com/googlecloudplatform/kubernetes)
+ * [swarm](https://github.com/docker/swarm/)
+ * [mesosphere](https://github.com/mesosphere/marathon)
+ * [fleet](https://github.com/coreos/fleet)
 
-Because powerstrip can compose prototypical docker extensions, you can use (compose) `powerstrip-flocker` nicely along with `powerstrip-weave`, `socketplane`, or [any other `powerstrip` adapter that exists](https://github.com/clusterhq/powerstrip#powerstrip-adapters).
+These tools don't have the concept of "portable volumes" - by leveraging the [Powerstrip](https://github.com/ClusterHQ/powerstrip) API - [powerstrip-flocker](https://github.com/ClusterHQ/powerstrip-flocker) brings this concept to all of them for free.
+
+## Composition
+
+Equally, [powerstrip-flocker](https://github.com/ClusterHQ/powerstrip-flocker) will work alongside other docker extension projects like networking tools:
+
+ * [weave](https://github.com/zettio/weave)
+ * [socketplane](https://github.com/socketplane/socketplane)
+ * [calico](https://github.com/Metaswitch/calico)
+
+The above tools "wrap" the docker cli and it was impossible to use them alongside other extensions like [Flocker](https://github.com/ClusterHQ/flocker).  This is because both tools "wrap" the docker cli meaning only one can be used per container.
+
+[Powerstrip](https://github.com/ClusterHQ/powerstrip) allows the composition of multiple adapters.  This means that a single docker host can now implement solutions for two of the critical issues which crop up when you run Docker on multiple hosts in production: storage and networking.
 
 ## Is it ready yet?
 
