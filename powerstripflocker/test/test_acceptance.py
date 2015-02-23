@@ -242,7 +242,7 @@ adapters:
         second instantiation of it persists.
         """
         pass
-    test_move_a_dataset_check_persistence.skip = "not implemented yet"
+    test_move_a_dataset_check_persistence.todo = "not implemented yet"
 
     def test_dataset_is_not_moved_when_being_used(self):
         """
@@ -251,7 +251,7 @@ adapters:
         underneath a running container.
         """
         pass
-    test_dataset_is_not_moved_when_being_used.skip = "not implemented yet"
+    test_dataset_is_not_moved_when_being_used.todo = "not implemented yet"
 
     def test_two_datasets_one_move_one_create(self):
         """
@@ -261,7 +261,7 @@ adapters:
         the container is started.
         """
         pass
-    test_two_datasets_one_move_one_create.skip = "not implemented yet"
+    test_two_datasets_one_move_one_create.todo = "not implemented yet"
 
 
 def powerstrip(node, command, input=""):
