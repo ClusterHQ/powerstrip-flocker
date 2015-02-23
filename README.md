@@ -5,9 +5,18 @@
 
 (Portable "volumes", hee hee.)
 
+## What's the problem?
+
+When you want to run Docker in production, you want to run it across multiple machines, using orchestration tools.
+But when you attach a volume to a Docker container, the machine it's running on becomes a [pet, not cattle](http://www.theregister.co.uk/2013/03/18/servers_pets_or_cattle_cern/).
+
+## The solution
+
+You should be able to run a stateful container with a given volume on any host in your cluster, and the platform should handle moving data around as necessary.
+
 ## What is `powerstrip-flocker`?
 
-`powerstrip-flocker` is a way of configuring docker which lets you use regular docker CLI commands or orchestration frameworks to create or move flocker volumes around between hosts in a cluster.
+`powerstrip-flocker` is a way of configuring docker which lets you use regular docker CLI commands or orchestration frameworks to create or move flocker volumes, automatically moving volumes around between hosts in a cluster as-needed.
 
 ## How does it work?
 
@@ -27,9 +36,11 @@ fish
 
 Finally you can run stateful containers in docker and stop worrying about where the data is.
 
+Note that powerstrip-flocker exposes a *global volume namespace*.
+
 ### Works with orchestration
 
-Because powerstrip speaks the Docker API, you can use powerstrip-flocker with your docker tools of choice, be it the plain ole' `docker` CLI, `swarm`, `mesosphere`, `kubernetes`, or anything else that speaks the [Docker remote API](https://docs.docker.com/reference/api/docker_remote_api/).
+Because powerstrip speaks the Docker API, you can use powerstrip-flocker with your docker tools of choice, be it the plain ole' `docker` CLI, `swarm`, `mesosphere`, `kubernetes`, `fleet` or anything else that speaks the [Docker remote API](https://docs.docker.com/reference/api/docker_remote_api/).
 
 ### Works with other prototypical extensions, e.g. networking
 
