@@ -9,15 +9,15 @@
 
 ## How does it work?
 
-`powerstrip-flocker` muxes between the docker remote api via powerstrip and the new flocker volumes api.
+`powerstrip-flocker` muxes between the [Docker Remote API](https://docs.docker.com/reference/api/docker_remote_api/) via [Powerstrip](https://github.com/clusterhq/powerstrip) and the [new Flocker Volumes API](doc-dev.clusterhq.com/advanced/api.html).
 
 ## Killer demo
 
 Write some data into a volume on one host, read it from another:
 
 ```
-node1$ docker run -v /flocker/demo:/data busybox sh -c "echo fish > /data/file"
-node2$ docker run -v /flocker/demo:/data busybox sh -c "cat /data/file"
+$ ssh node1 docker run -v /flocker/demo:/data busybox sh -c "echo fish > /data/file"
+$ ssh node2 docker run -v /flocker/demo:/data busybox sh -c "cat /data/file"
 fish
 ```
 
@@ -25,7 +25,11 @@ fish
 
 Finally you can run stateful containers in docker and stop worrying about where the data is.
 
+### Works with orchestration
+
 Because powerstrip speaks the Docker API, you can use powerstrip-flocker with your docker tools of choice, be it the plain ole' `docker` CLI, `swarm`, `mesosphere`, `kubernetes`, or anything else that speaks the [Docker remote API](https://docs.docker.com/reference/api/docker_remote_api/).
+
+### Works with other prototypical extensions, e.g. networking
 
 Because powerstrip can compose prototypical docker extensions, you can use (compose) `powerstrip-flocker` nicely along with `powerstrip-weave`, `socketplane`, or [any other `powerstrip` adapter that exists](https://github.com/clusterhq/powerstrip#powerstrip-adapters).
 
