@@ -14,8 +14,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provider :aws do |aws, override|
     # TODO: Move these out of this file
-    aws.access_key_id = ""
-    aws.secret_access_key = ""
+    aws.access_key_id = `cat access_key_id.txt`.strip()
+    aws.secret_access_key = `cat secret_access_key.txt`.strip()
     aws.keypair_name = "luke"
 
     aws.ami = "ami-3cf8b154"
