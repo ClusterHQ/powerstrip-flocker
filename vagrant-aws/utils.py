@@ -1,8 +1,8 @@
 from pipes import quote
 import subprocess
-import json
+import yaml
 
-config = json.load(open("settings.yml"))
+config = yaml.load(open("settings.yml"))
 
 def runSSH(ip, command):
     command = 'ssh -i %s ubuntu@%s %s' % (config["private_key_path"],
