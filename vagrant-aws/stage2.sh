@@ -8,9 +8,6 @@ if [[ ! -x /vagrant ]]; then
     ln -s /root/ubuntu /vagrant
 fi
 
-zfs create hpool/hcfs
-zfs set mountpoint=/hcfs hpool/hcfs
-
 echo "Cloning flocker..."
 cd /opt
 git clone https://github.com/clusterhq/flocker

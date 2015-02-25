@@ -10,7 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # please see the online documentation at vagrantup.com.
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "XXX"
+  #config.vm.box = "XXX"
 
   config.vm.provider :aws do |aws, override|
     # TODO: Move these out of this file
@@ -18,23 +18,30 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     aws.secret_access_key = `cat secret_access_key.txt`.strip()
     aws.keypair_name = "luke"
 
-    aws.ami = "ami-3cf8b154"
+    #aws.ami = "ami-b45c01dc" # flocker-powerstrip demo: zfs installed
+    aws.ami = "ami-3cf8b154" # ubuntu 14.04
     #aws.instance_type = "m3.large"
-    aws.instance_type = "c3.xlarge" # $0.23/hr - try timing comparison with c3.xlarge which is $0.30/hr
+    aws.instance_type = "c3.xlarge"
 
     override.vm.box = "dummy"
     override.ssh.username = "ubuntu"
     override.ssh.private_key_path = "/Users/luke/Downloads/luke.pem"
   end
 
-  config.vm.provider "vmware_fusion" do |v, override|
-    v.gui = true
-    v.vmx["memsize"] = "1024"
-    v.vmx["numvcpus"] = "2"
+  config.vm.define "node1" do |node1|
+    node1.vm.provider :aws do |aws, override|
+        aws.tags = {
+            'Name' => 'flocker-powerstrip master',
+        }
+    end
   end
-
-  config.vm.define "node1"
-  config.vm.define "node2"
+  config.vm.define "node2" do |node2|
+    node2.vm.provider :aws do |aws, override|
+        aws.tags = {
+            'Name' => 'flocker-powerstrip minion',
+        }
+    end
+  end
 
   # Bootstrap provisioning
   config.vm.provision :shell, :path => "bootstrap.sh"
