@@ -31,5 +31,5 @@ def pushConfig(text, instances):
                         external_ip=externalIP, filename=f)
             subprocess.check_output(scp, shell=True)
             runSSH(externalIP, ['sudo', 'mv', '/tmp/%s' % (f,), '/etc/flocker/%s' % (f,)])
-            print "Pushed f to %s" % (externalIP,)
+            print "Pushed", f, "to", externalIP
     print "Finished telling all nodes about the master."
