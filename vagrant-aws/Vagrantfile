@@ -26,7 +26,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     aws.instance_type = "c3.xlarge"
 
     override.vm.box = "dummy"
-    override.ssh.username = "ubuntu"
+    override.ssh.username = settings["remote_server_username"]
     override.ssh.private_key_path = settings["private_key_path"]
   end
 

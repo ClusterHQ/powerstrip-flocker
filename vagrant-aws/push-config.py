@@ -6,7 +6,7 @@ import subprocess
 print "Gathering internal & external IP addresses from Vagrant..."
 
 instances = []
-for n in range(1, 2):
+for n in range(1, 3):
     command = "vagrant ssh-config node%d 2>/dev/null |grep HostName" % (n,)
     result = subprocess.check_output(command, shell=True)
     externalIP = result.split()[1]
