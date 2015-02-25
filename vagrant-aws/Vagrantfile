@@ -13,10 +13,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   #config.vm.box = "XXX"
 
   config.vm.provider :aws do |aws, override|
+    require 'yaml'
+    settings = YAML.load(File.open("settings.yml").read)
     # TODO: Move these out of this file
-    aws.access_key_id = `cat access_key_id.txt`.strip()
-    aws.secret_access_key = `cat secret_access_key.txt`.strip()
-    aws.keypair_name = "luke"
+    aws.access_key_id = settings["aws_access_key_id"]
+    aws.secret_access_key = settings["aws_secret_access_key"]
+    aws.keypair_name = settings["keypair_name"]
 
     aws.ami = "ami-6a5b0602" # ubuntu-zfs-base
     #aws.ami = "ami-3cf8b154" # ubuntu 14.04
@@ -25,7 +27,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     override.vm.box = "dummy"
     override.ssh.username = "ubuntu"
-    override.ssh.private_key_path = "/Users/luke/Downloads/luke.pem"
+    override.ssh.private_key_path = settings["private_key_path"]
   end
 
   config.vm.define "node1" do |node1|

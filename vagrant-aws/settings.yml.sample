@@ -1,0 +1,4 @@
+aws_access_key_id: # aws access key
+aws_secret_access_key: # aws secret access key
+aws_keypair_name: # keypair name as it appears in aws console
+private_key_path: # local path to .pem file for private key
