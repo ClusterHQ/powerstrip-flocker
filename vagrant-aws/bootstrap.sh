@@ -5,5 +5,5 @@ if [ -x /vagrant ]; then
 fi
 
 #./stage1.sh
-./stage2.sh
+#./stage2.sh
 
