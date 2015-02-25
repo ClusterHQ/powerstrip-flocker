@@ -16,16 +16,16 @@ EOF
 
 
 cmd-link-systemd-target() {
-	ln -sf /etc/systemd/system/$1.service /etc/systemd/system/multi-user.target.wants/$1.service
+  ln -sf /etc/systemd/system/$1.service /etc/systemd/system/multi-user.target.wants/$1.service
 }
 
 cmd-docker-remove() {
-	DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker stop $1 2>/dev/null || true
-	DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker rm $1 2>/dev/null || true
+  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker stop $1 2>/dev/null || true
+  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker rm $1 2>/dev/null || true
 }
 
 cmd-docker-pull() {
-	DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker pull $1
+  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker pull $1
 }
 
 cmd-configure-adapter() {
@@ -44,11 +44,11 @@ ExecStart=/usr/bin/bash /vagrant/install.sh start-adapter $IP $CONTROLIP
 WantedBy=multi-user.target
 EOF
 
-	cmd-link-systemd-target powerstrip-flocker
+  cmd-link-systemd-target powerstrip-flocker
 }
 
 cmd-start-adapter() {
-	cmd-docker-remove powerstrip-flocker
+  cmd-docker-remove powerstrip-flocker
   local IP="$1";
   local CONTROLIP="$2";
   local HOSTID=$(cmd-get-flocker-uuid)
@@ -75,12 +75,12 @@ ExecStart=/usr/bin/bash /vagrant/install.sh start-powerstrip
 WantedBy=multi-user.target
 EOF
 
-	cmd-link-systemd-target powerstrip
+  cmd-link-systemd-target powerstrip
 }
 
 cmd-start-powerstrip() {
-	rm -f /var/run/docker.sock
-	cmd-docker-remove powerstrip
+  rm -f /var/run/docker.sock
+  cmd-docker-remove powerstrip
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
   docker run -d --name powerstrip \
     -v /var/run:/host-var-run \
@@ -123,7 +123,7 @@ ExecStart=/usr/sbin/setenforce 0 && /opt/flocker/bin/flocker-zfs-agent $IP $CONT
 WantedBy=multi-user.target
 EOF
 
-	cmd-link-systemd-target flocker-zfs-agent
+  cmd-link-systemd-target flocker-zfs-agent
 }
 
 cmd-flocker-control-service() {
@@ -139,11 +139,11 @@ ExecStart=/opt/flocker/bin/flocker-control -p $FLOCKER_CONTROL_PORT
 WantedBy=multi-user.target
 EOF
 
-	cmd-link-systemd-target flocker-control-service
+  cmd-link-systemd-target flocker-control-service
 }
 
 cmd-powerstrip() {
-	# write adapters.yml
+  # write adapters.yml
   cmd-powerstrip-config
 
   # setup docker on /var/run/docker.real.sock
@@ -154,8 +154,8 @@ cmd-powerstrip() {
   cmd-configure-powerstrip
 
   # pull the images first
-	cmd-docker-pull clusterhq/powerstrip-flocker:latest
-	cmd-docker-pull clusterhq/powerstrip:unix-socket
+  cmd-docker-pull clusterhq/powerstrip-flocker:latest
+  cmd-docker-pull clusterhq/powerstrip:unix-socket
 
   # kick off systemctl
   systemctl daemon-reload
@@ -167,7 +167,7 @@ cmd-powerstrip() {
 
 cmd-master() {
 
-	# write unit files for both services
+  # write unit files for both services
   cmd-flocker-control-service
   cmd-flocker-zfs-agent $@
 
@@ -220,11 +220,11 @@ main() {
   start-adapter)            shift; cmd-start-adapter $@;;
   start-powerstrip)         shift; cmd-start-powerstrip $@;;
   powerstrip-config)        shift; cmd-powerstrip-config $@;;
-	docker-remove)            shift; cmd-docker-remove $@;;
+  docker-remove)            shift; cmd-docker-remove $@;;
   *)                        usage $@;;
   esac
 }
 
-# 
+#
 
 main "$@"
