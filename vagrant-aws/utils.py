@@ -18,9 +18,18 @@ def pushConfig(text, instances):
     print "Written master address"
     for (externalIP, internalIP) in instances:
         runSSH(externalIP, ['sudo', 'mkdir', '-p', '/etc/flocker'])
-        scp = "scp -i %s master_address %s@%s:/tmp/master_address" % (
-                config["private_key_path"], config["remote_server_username"], externalIP,)
-        subprocess.check_output(scp, shell=True)
-        runSSH(externalIP, ['sudo', 'mv', '/tmp/master_address', '/etc/flocker/master_address'])
-        print "Pushed master address to %s" % (externalIP,)
+
+        f = open("my_address", "w")
+        f.write(externalIP)
+        f.close()
+
+        for f in ('master_address', 'my_address'):
+            scp = ("scp -i %(private_key_path)s %(filename)s "
+                   "%(remote_server_username)s@%(external_ip)s:/tmp/%(filename)s") % dict(
+                        private_key_path=config["private_key_path"],
+                        remote_server_username=config["remote_server_username"],
+                        external_ip=externalIP, filename=f)
+            subprocess.check_output(scp, shell=True)
+            runSSH(externalIP, ['sudo', 'mv', '/tmp/%s' % (f,), '/etc/flocker/%s' % (f,)])
+            print "Pushed f to %s" % (externalIP,)
     print "Finished telling all nodes about the master."
