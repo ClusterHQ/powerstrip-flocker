@@ -18,8 +18,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     aws.secret_access_key = `cat secret_access_key.txt`.strip()
     aws.keypair_name = "luke"
 
-    #aws.ami = "ami-b45c01dc" # flocker-powerstrip demo: zfs installed
-    aws.ami = "ami-3cf8b154" # ubuntu 14.04
+    aws.ami = "ami-6a5b0602" # ubuntu-zfs-base
+    #aws.ami = "ami-3cf8b154" # ubuntu 14.04
     #aws.instance_type = "m3.large"
     aws.instance_type = "c3.xlarge"
 

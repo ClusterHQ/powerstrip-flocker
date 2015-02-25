@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-good_flocker_version="ff051f09f22a5e9ce950e86dd2a82bb23406b888"
+good_flocker_version="bcc7bb4280629a67b97da7750ca6e513767aad21"
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -13,19 +13,21 @@ cd /opt
 git clone https://github.com/clusterhq/flocker
 cd flocker
 git checkout $good_flocker_version
+
+apt-get -y install python-setuptools python-dev
+
+# uhhh.. hack
+cd ~/
+wget https://pypi.python.org/packages/source/m/machinist/machinist-0.2.0.tar.gz
+tar zxfv machinist-0.2.0.tar.gz
+cd machinist-0.2.0
 python setup.py install
 
-# Use pip to upgrade itself and install all requirements
-#pip install --upgrade pip
-#easy_install -U distribute # An error message told me to do this :(
-# at this point, /usr/bin/pip has been replaced by /usr/local/bin/pip :(
-#/usr/local/bin/pip install -r requirements.txt
+# now install flocker
+cd /opt/flocker
+python setup.py install
 
-# Link in our supervisord config
-#ln -s /opt/flocker.../supervisor/flocker /etc/supervisor/conf.d/...
-
-# TODO - restart supervisord automatically after putting cluster config in place
-
+# now install docker
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
 
 echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list
