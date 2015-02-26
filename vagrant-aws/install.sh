@@ -173,7 +173,7 @@ cmd-start-adapter() {
   docker run --name powerstrip-flocker \
     --expose 80 \
     -e "MY_NETWORK_IDENTITY=$IP" \
-    -e "FLOCKER_CONTROL_BASE_URL=http://$CONTROLIP:80/v1" \
+    -e "FLOCKER_CONTROL_SERVICE_BASE_URL=http://$CONTROLIP:80/v1" \
     -e "MY_HOST_UUID=$HOSTID" \
     clusterhq/powerstrip-flocker:latest
 }
