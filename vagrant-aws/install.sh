@@ -2,45 +2,103 @@
 
 export FLOCKER_CONTROL_PORT=${FLOCKER_CONTROL_PORT:=80}
 
+# supported distributions: "ubuntu", "redhat" (means centos/fedora)
+export DISTRO=${DISTRO:="ubuntu"}
+
 cmd-get-flocker-uuid() {
   if [[ ! -f /etc/flocker/volume.json ]]; then
     >&2 echo "/etc/flocker/volume.json NOT FOUND";
     exit 1;
   fi
+  # XXX should use actual json parser!
   cat /etc/flocker/volume.json | sed 's/.*"uuid": "//' | sed 's/"}//'
 }
 
 cmd-wait-for-file() {
-  while [ ! -f $1 ]
+  while [[ ! -f $1 ]]
   do
     echo "wait for file $1" && sleep 1
   done
 }
 
 cmd-configure-docker() {
-  /usr/sbin/setenforce 0
+  if [[ "$DISTRO" == "redhat" ]]; then
+    /usr/sbin/setenforce 0
+  fi
 
   echo "configuring docker to list on unix:///var/run/docker.real.sock";
 
-  # docker itself listens on docker.real.sock and powerstrip listens on docker.sock
-  cat << EOF > /etc/sysconfig/docker-network
+  if [[ "$DISTRO" == "redhat" ]]; then
+    # docker itself listens on docker.real.sock and powerstrip listens on docker.sock
+    cat << EOF > /etc/sysconfig/docker-network
 DOCKER_NETWORK_OPTIONS=-H unix:///var/run/docker.real.sock
 EOF
 
-  # the key here is removing the selinux=yes option from docker
-  cat << EOF > /etc/sysconfig/docker 
+    # the key here is removing the selinux=yes option from docker
+    cat << EOF > /etc/sysconfig/docker
 OPTIONS=''
 DOCKER_CERT_PATH=/etc/docker
 TMPDIR=/var/tmp
 EOF
 
-  systemctl restart docker
+    systemctl restart docker
+  fi
+
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    cat << EOF > /etc/default/docker
+# Docker Upstart and SysVinit configuration file
+
+# Customize location of Docker binary (especially for development testing).
+#DOCKER="/usr/local/bin/docker"
+
+# Use DOCKER_OPTS to modify the daemon startup options.
+DOCKER_OPTS="-H unix:///var/run/docker.real.sock --dns 8.8.8.8 --dns 8.8.4.4"
+
+# If you need Docker to use an HTTP proxy, it can also be specified here.
+#export http_proxy="http://127.0.0.1:3128/"
+
+# This is also a handy place to tweak where Docker's temporary files go.
+#export TMPDIR="/mnt/bigdrive/docker-tmp"
+EOF
+  fi
   rm -f /var/run/docker.sock
 }
 
 
-cmd-link-systemd-target() {
-  ln -sf /etc/systemd/system/$1.service /etc/systemd/system/multi-user.target.wants/$1.service
+cmd-enable-system-service() {
+  if [[ "$DISTRO" == "redhat" ]]; then
+    ln -sf /etc/systemd/system/$1.service /etc/systemd/system/multi-user.target.wants/$1.service
+  fi
+}
+
+cmd-reload-process-supervisor() {
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    supervisorctl reread
+  fi
+  if [[ "$DISTRO" == "redhat" ]]; then
+    systemctl daemon-reload
+  fi
+}
+
+cmd-start-system-service() {
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    supervisorctl start $1
+  fi
+  if [[ "$DISTRO" == "redhat" ]]; then
+    # systemd requires services to be enabled before they're started, but
+    # supervisor enables services by default (?)
+    systemctl enable $1.service
+    systemctl start $1.service
+  fi
+}
+
+cmd-stop-system-service() {
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    supervisorctl stop $1
+  fi
+  if [[ "$DISTRO" == "redhat" ]]; then
+    systemctl stop $1.service
+  fi
 }
 
 cmd-docker-remove() {
@@ -57,21 +115,34 @@ cmd-docker-pull() {
 cmd-configure-adapter() {
   local IP="$1";
   local CONTROLIP="$2";
+
+  local cmd="/vagrant/install.sh start-adapter $IP $CONTROLIP"
+  local service="powerstrip-flocker"
+
   echo "configure powerstrip adapter - $1 $2";
-  cat << EOF > /etc/systemd/system/powerstrip-flocker.service
+
+  if [[ "$DISTRO" == "redhat" ]]; then
+    cat << EOF > /etc/systemd/system/$service.service
 [Unit]
 Description=Powerstrip Flocker Adapter
 After=docker.service
 Requires=docker.service
 
 [Service]
-ExecStart=/usr/bin/bash /vagrant/install.sh start-adapter $IP $CONTROLIP
+ExecStart=/usr/bin/bash $cmd
 
 [Install]
 WantedBy=multi-user.target
 EOF
+  fi
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=/bin/bash $cmd
+EOF
+  fi
 
-  cmd-link-systemd-target powerstrip-flocker
+  cmd-enable-system-service $service
 }
 
 cmd-start-adapter() {
@@ -89,21 +160,33 @@ cmd-start-adapter() {
 }
 
 cmd-configure-powerstrip() {
-  echo "configure powerstrip";
-  cat << EOF > /etc/systemd/system/powerstrip.service
+  local cmd="/vagrant/install.sh start-powerstrip"
+  local service="powerstrip"
+
+  echo "configure $service";
+
+  if [[ "$DISTRO" == "redhat" ]]; then
+    cat << EOF > /etc/systemd/system/$service.service
 [Unit]
 Description=Powerstrip Server
 After=powerstrip-flocker.service
 Requires=powerstrip-flocker.service
 
 [Service]
-ExecStart=/usr/bin/bash /vagrant/install.sh start-powerstrip
+ExecStart=/usr/bin/bash $cmd
 
 [Install]
 WantedBy=multi-user.target
 EOF
+  fi
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=/bin/bash $cmd
+EOF
+  fi
 
-  cmd-link-systemd-target powerstrip
+  cmd-enable-system-service $service
 }
 
 cmd-start-powerstrip() {
@@ -115,7 +198,9 @@ cmd-start-powerstrip() {
     -v /etc/powerstrip-demo/adapters.yml:/etc/powerstrip/adapters.yml \
     --link powerstrip-flocker:flocker \
     clusterhq/powerstrip:unix-socket
+  # XXX sleep 5 should be replaced by wait-for-file
   sleep 5
+  # XXX should use user defined in settings.yml here
   chgrp vagrant /var/run/docker.sock
 }
 
@@ -140,46 +225,65 @@ cmd-flocker-zfs-agent() {
     CONTROLIP="127.0.0.1";
   fi
 
-  echo "configure flocker-zfs-agent";
-  cat << EOF > /etc/systemd/system/flocker-zfs-agent.service
+  local cmd="/opt/flocker/bin/flocker-zfs-agent $IP $CONTROLIP"
+  local service="flocker-zfs-agent"
+
+  echo "configure $service";
+  if [[ "$DISTRO" == "redhat" ]]; then
+    cat << EOF > /etc/systemd/system/$service.service
 [Unit]
 Description=Flocker ZFS Agent
 
 [Service]
 TimeoutStartSec=0
-ExecStart=/opt/flocker/bin/flocker-zfs-agent $IP $CONTROLIP
+ExecStart=$cmd
 
 [Install]
 WantedBy=multi-user.target
 EOF
+  fi
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=$cmd
+EOF
+  fi
 
-  cmd-link-systemd-target flocker-zfs-agent
+  cmd-enable-system-service flocker-zfs-agent
 }
 
 cmd-flocker-control-service() {
+  local cmd="/opt/flocker/bin/flocker-control -p $FLOCKER_CONTROL_PORT"
+  local service="flocker-control-service"
 
-  echo "configure flocker-control-service";
+  echo "configure $service"
 
-  cat << EOF > /etc/systemd/system/flocker-control-service.service
+  if [[ "$DISTRO" == "redhat" ]]; then
+    cat << EOF > /etc/systemd/system/$service.service
 [Unit]
 Description=Flocker Control Service
 
 [Service]
 TimeoutStartSec=0
-ExecStart=/opt/flocker/bin/flocker-control -p $FLOCKER_CONTROL_PORT
+ExecStart=$cmd
 
 [Install]
 WantedBy=multi-user.target
 EOF
+  fi
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=$cmd
+EOF
+  fi
 
-  cmd-link-systemd-target flocker-control-service
+  cmd-enable-system-service flocker-control-service
 }
 
 cmd-powerstrip() {
   # write adapters.yml
   cmd-powerstrip-config
-
-  
 
   # write unit files for powerstrip-flocker and powerstrip
   cmd-configure-adapter $@
@@ -207,10 +311,10 @@ cmd-setup-zfs-agent() {
   cmd-configure-docker
 
   # we need to start the zfs service so we have /etc/flocker/volume.json
-  systemctl daemon-reload
-  systemctl start flocker-zfs-agent.service
+  cmd-reload-process-supervisor
+  cmd-start-system-service flocker-zfs-agent
   cmd-wait-for-file /etc/flocker/volume.json
-  systemctl stop flocker-zfs-agent.service
+  cmd-stop-system-service flocker-zfs-agent
 
   cmd-powerstrip $@
 }
@@ -221,21 +325,16 @@ cmd-master() {
   cmd-setup-zfs-agent $@
 
   # kick off systemctl
-  systemctl daemon-reload
-  systemctl enable flocker-control-service.service
-  systemctl enable flocker-zfs-agent.service
-  systemctl start flocker-control-service.service
-  systemctl start flocker-zfs-agent.service
-  
+  cmd-reload-process-supervisor
+  cmd-start-system-service flocker-control-service
+  cmd-start-system-service flocker-zfs-agent
 }
 
 cmd-minion() {
   cmd-setup-zfs-agent $@
 
-  systemctl daemon-reload
-  systemctl enable flocker-zfs-agent.service
-  systemctl start flocker-zfs-agent.service
-  
+  cmd-reload-process-supervisor
+  cmd-start-system-service flocker-zfs-agent
 }
 
 usage() {
