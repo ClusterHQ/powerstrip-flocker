@@ -4,7 +4,7 @@ zfs_pool_name="flocker"
 
 if [[ -b /dev/xvdb ]]; then
     echo "Detected EBS environment, setting up real zpool..."
-    # Then create it again.
+    umount /mnt # this is where xvdb is mounted by default
     zpool create $zfs_pool_name /dev/xvdb
 elif [[ ! -b /dev/sdb ]]; then
     echo "Setting up a toy zpool..."
