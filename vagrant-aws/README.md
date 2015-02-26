@@ -1,6 +1,6 @@
 # powerstrip-flocker demo on AWS
 
-This demo wil guide you through the steps needed to run a multi-node powerstrip-flocker demo using AWS.  We use Vagrant to spin up and manage the AWS nodes.
+This demo will guide you through the steps needed to run a multi-node powerstrip-flocker demo using AWS.  We use Vagrant to spin up and manage the AWS nodes.
 
 ## Requirements
 
