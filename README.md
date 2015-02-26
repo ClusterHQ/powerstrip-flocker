@@ -74,8 +74,9 @@ Then [let us know what you think](https://github.com/ClusterHQ/powerstrip-flocke
 
 ## OK, how do I try it?
 
-Run the following commands on your OS X or Linux host with Vagrant and Virtualbox installed, and you can try out our :
+We've put together a special demo preview environment:
 
-```
-# ...
-```
+You can try out our demo environment either with vagrant on local files, or on AWS:
+
+* Vagrant: https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant
+* AWS: https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant-aws
