@@ -123,10 +123,11 @@ cmd-docker-remove() {
   DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER rm $1 2>/dev/null || true
 }
 
-# docker pull a named container
+# docker pull a named container - this always runs before the docker socket
+# gets reconfigured
 cmd-docker-pull() {
   echo "pull image $1";
-  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER pull $1
+  $DOCKER pull $1
 }
 
 # configure powerstrip-flocker adapter
@@ -326,11 +327,6 @@ cmd-powerstrip() {
   cmd-configure-adapter $@
   cmd-configure-powerstrip
 
-  # pull the images first
-  cmd-docker-pull ubuntu:latest
-  cmd-docker-pull clusterhq/powerstrip-flocker:latest
-  cmd-docker-pull clusterhq/powerstrip:unix-socket
-
   # kick off services
   cmd-reload-process-supervisor
   cmd-start-system-service powerstrip-flocker
@@ -375,6 +371,11 @@ cmd-init() {
   # if we're not being passed IP addresses as arguments, see if we can fetch
   # them from disk
   cmd-fetch-config-from-disk-if-present
+
+  # pull the images first
+  cmd-docker-pull ubuntu:latest
+  cmd-docker-pull clusterhq/powerstrip-flocker:latest
+  cmd-docker-pull clusterhq/powerstrip:unix-socket
 }
 
 cmd-master() {
