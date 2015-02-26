@@ -10,6 +10,8 @@ Ensure that you have the following installed on your system:
  * [vagrant](http://www.vagrantup.com/downloads.html)
  * [python](https://www.python.org/downloados/)
 
+Also you need the `yaml` python module installed on your machine - you may wish to run `sudo pip install pyyaml`
+
 ## Setup
 
 #### Get vagrant-aws
