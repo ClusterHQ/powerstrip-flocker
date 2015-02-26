@@ -13,13 +13,21 @@ See README.md in this directory instead.
   This is the ubuntu 14.04 base AMI.
 * Edit bootstrap.sh and make it only run `./stage1.sh`.
 * Run `vagrant up` and wait for ZFS to compile.
-* Log into node1 with `vagrant ssh node1` and run `sudo mv ~/.ssh/authorized_keys ~/.ssh/authorized_keys.disabled`
-* Log into the AWS console and create an AMI from the current running state of node1 (named "flocker-powerstrip master").
-* Now you can revert the changes you made to `Vagrantfile` and `bootstrap.sh`, and put the new AMI ID into the Vagrantfile.
+* Follow "making a new AMI" steps
 
 # stage 2 - installing flocker
 
 * Make bootstrap.sh run only `./stage2.sh`.
+* Follow "making a new AMI" steps
+
+
+# making a new AMI
+
+* Log into node1 with `vagrant ssh node1` and run `sudo mv ~/.ssh/authorized_keys ~/.ssh/authorized_keys.disabled`.
+* `rm /vagrant/{settings.yml,access_key_id.txt,secret_access_key.txt}` (ideally this would be a secure destroy, or not have this file copied in in the first place)
+* Log into the AWS console and create an AMI from the current running state of node1 (named "flocker-powerstrip master").
+* Now you can revert any changes you made to `Vagrantfile` and `bootstrap.sh`, and put the new AMI ID into the Vagrantfile.
+
 
 # at vagrant provisioning time
 
