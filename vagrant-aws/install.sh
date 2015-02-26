@@ -73,13 +73,13 @@ cmd-enable-system-service() {
   fi
   if [[ "$DISTRO" == "ubuntu" ]]; then
     # re-read the config files on disk (supervisorctl always has everything enabled)
-    supervisorctl reread
+    supervisorctl update
   fi
 }
 
 cmd-reload-process-supervisor() {
   if [[ "$DISTRO" == "ubuntu" ]]; then
-    supervisorctl reread
+    supervisorctl update
   fi
   if [[ "$DISTRO" == "redhat" ]]; then
     systemctl daemon-reload
