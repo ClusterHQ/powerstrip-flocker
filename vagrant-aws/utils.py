@@ -34,7 +34,7 @@ def pushConfig(text, instances):
         # port and minion port) [might as well push list of minions to all
         # nodes at this point...]
         f = open("minions", "w")
-        f.write([e for (e, i) in instances].join("\n"))
+        f.write("\n".join([e for (e, i) in instances]))
         f.close()
 
         for f in ('master_address', 'my_address', 'minions'):
