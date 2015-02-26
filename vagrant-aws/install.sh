@@ -5,6 +5,11 @@ export FLOCKER_CONTROL_PORT=${FLOCKER_CONTROL_PORT:=80}
 # supported distributions: "ubuntu", "redhat" (means centos/fedora)
 export DISTRO=${DISTRO:="ubuntu"}
 
+export FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
+export FLOCKER_CONTROL_SERVICE=`which flocker-control-service`
+export DOCKER=`which docker`
+export BASH=`which bash`
+
 # on subsequent vagrant ups - vagrant has not mounted /vagrant/install.sh
 # so we copy it into place
 cmd-copy-vagrant-dir() {
@@ -114,14 +119,14 @@ cmd-restart-docker() {
 # stop and remove a named container
 cmd-docker-remove() {
   echo "remove container $1";
-  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker stop $1 2>/dev/null || true
-  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker rm $1 2>/dev/null || true
+  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER stop $1 2>/dev/null || true
+  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER rm $1 2>/dev/null || true
 }
 
 # docker pull a named container
 cmd-docker-pull() {
   echo "pull image $1";
-  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker pull $1
+  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER pull $1
 }
 
 # configure powerstrip-flocker adapter
@@ -139,8 +144,8 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-ExecStart=/usr/bin/bash $cmd
-ExecStop=/usr/bin/bash /srv/vagrant/install.sh docker-remove $service
+ExecStart=$BASH $cmd
+ExecStop=$BASH /srv/vagrant/install.sh docker-remove $service
 
 [Install]
 WantedBy=multi-user.target
@@ -149,7 +154,7 @@ EOF
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/supervisor/conf.d/$service.conf
 [program:$service]
-command=/bin/bash $cmd
+command=$BASH $cmd
 EOF
   # XXX there's no equivalent "ExecStop" command in supervisor...
   fi
@@ -185,8 +190,8 @@ After=powerstrip-flocker.service
 Requires=powerstrip-flocker.service
 
 [Service]
-ExecStart=/usr/bin/bash $cmd
-ExecStop=/usr/bin/bash /srv/vagrant/install.sh docker-remove $service
+ExecStart=$BASH $cmd
+ExecStop=$BASH /srv/vagrant/install.sh docker-remove $service
 
 [Install]
 WantedBy=multi-user.target
@@ -195,7 +200,7 @@ EOF
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/supervisor/conf.d/$service.conf
 [program:$service]
-command=/bin/bash $cmd
+command=$BASH $cmd
 EOF
   fi
 
@@ -241,7 +246,7 @@ EOF
 
 # write systemd unit file for the zfs agent
 cmd-flocker-zfs-agent() {
-  local cmd="/usr/bin/bash /srv/vagrant/install.sh block-start-flocker-zfs-agent $@"
+  local cmd="$BASH /srv/vagrant/install.sh block-start-flocker-zfs-agent $@"
   local service="flocker-zfs-agent"
 
   echo "configure $service";
@@ -278,13 +283,13 @@ cmd-block-start-flocker-zfs-agent() {
 
   while ! docker info; do echo "waiting for /var/run/docker.sock" && sleep 1; done;
   # TODO maaaaybe check for powerstrip container running here?
-  /opt/flocker/bin/flocker-zfs-agent $IP $CONTROLIP
+  $FLOCKER_ZFS_AGENT $IP $CONTROLIP
 }
 
 
 # configure control service with process manager
 cmd-flocker-control-service() {
-  local cmd="/opt/flocker/bin/flocker-control -p $FLOCKER_CONTROL_PORT"
+  local cmd="$FLOCKER_CONTROL_SERVICE -p $FLOCKER_CONTROL_PORT"
   local service="flocker-control-service"
 
   echo "configure $service"
