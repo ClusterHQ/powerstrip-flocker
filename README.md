@@ -20,7 +20,7 @@ You should be able to run a stateful container with a given volume on any host i
 
 ## How does it work?
 
-`powerstrip-flocker` connects the [Docker Remote API](https://docs.docker.com/reference/api/docker_remote_api/) to the [new Flocker Volumes API](doc-dev.clusterhq.com/advanced/api.html) via [Powerstrip](https://github.com/clusterhq/powerstrip).
+`powerstrip-flocker` connects the [Docker Remote API](https://docs.docker.com/reference/api/docker_remote_api/) to the [new Flocker Volumes API](http://doc-dev.clusterhq.com/advanced/api.html) via [Powerstrip](https://github.com/clusterhq/powerstrip).
 
 ## Killer demo
 
@@ -59,9 +59,11 @@ Equally, [powerstrip-flocker](https://github.com/ClusterHQ/powerstrip-flocker) w
  * [socketplane](https://github.com/socketplane/socketplane)
  * [calico](https://github.com/Metaswitch/calico)
 
-The above tools "wrap" the docker cli and it was impossible to use them alongside other extensions like [Flocker](https://github.com/ClusterHQ/flocker).  This is because both tools "wrap" the docker cli meaning only one can be used per container.
+The above tools "wrap" the docker cli and it was impossible to use them alongside other extensions like [Flocker](https://github.com/ClusterHQ/flocker).
+This is because both tools "wrap" the docker cli meaning only one can be used per container.
 
-[Powerstrip](https://github.com/ClusterHQ/powerstrip) allows the composition of multiple adapters.  This means that a single docker host can now implement solutions for two of the critical issues which crop up when you run Docker on multiple hosts in production: storage and networking.
+[Powerstrip](https://github.com/ClusterHQ/powerstrip) allows the composition of multiple adapters.
+This means that a single docker host can now implement solutions for two of the critical issues which crop up when you run Docker on multiple hosts in production: storage and networking.
 
 ## Is it ready yet?
 
