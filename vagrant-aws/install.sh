@@ -3,13 +3,37 @@
 export FLOCKER_CONTROL_PORT=${FLOCKER_CONTROL_PORT:=80}
 
 cmd-get-flocker-uuid() {
+  if [[ ! -f /etc/flocker/volume.json ]]; then
+    >&2 echo "/etc/flocker/volume.json NOT FOUND";
+    exit 1;
+  fi
   cat /etc/flocker/volume.json | sed 's/.*"uuid": "//' | sed 's/"}//'
 }
 
+cmd-wait-for-file() {
+  while [ ! -f $1 ]
+  do
+    echo "wait for file $1" && sleep 1
+  done
+}
+
 cmd-configure-docker() {
+  /usr/sbin/setenforce 0
+
+  echo "configuring docker to list on unix:///var/run/docker.real.sock";
+
+  # docker itself listens on docker.real.sock and powerstrip listens on docker.sock
   cat << EOF > /etc/sysconfig/docker-network
 DOCKER_NETWORK_OPTIONS=-H unix:///var/run/docker.real.sock
 EOF
+
+  # the key here is removing the selinux=yes option from docker
+  cat << EOF > /etc/sysconfig/docker 
+OPTIONS=''
+DOCKER_CERT_PATH=/etc/docker
+TMPDIR=/var/tmp
+EOF
+
   systemctl restart docker
   rm -f /var/run/docker.sock
 }
@@ -20,17 +44,20 @@ cmd-link-systemd-target() {
 }
 
 cmd-docker-remove() {
+  echo "remove container $1";
   DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker stop $1 2>/dev/null || true
   DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker rm $1 2>/dev/null || true
 }
 
 cmd-docker-pull() {
+  echo "pull image $1";
   DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker pull $1
 }
 
 cmd-configure-adapter() {
   local IP="$1";
   local CONTROLIP="$2";
+  echo "configure powerstrip adapter - $1 $2";
   cat << EOF > /etc/systemd/system/powerstrip-flocker.service
 [Unit]
 Description=Powerstrip Flocker Adapter
@@ -53,7 +80,7 @@ cmd-start-adapter() {
   local CONTROLIP="$2";
   local HOSTID=$(cmd-get-flocker-uuid)
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
-  docker run -d --name powerstrip-flocker \
+  docker run --name powerstrip-flocker \
     --expose 80 \
     -e "MY_NETWORK_IDENTITY=$IP" \
     -e "FLOCKER_CONTROL_SERVICE_BASE_URL=http://$CONTROLIP:80/v1" \
@@ -62,7 +89,8 @@ cmd-start-adapter() {
 }
 
 cmd-configure-powerstrip() {
-    cat << EOF > /etc/systemd/system/powerstrip.service
+  echo "configure powerstrip";
+  cat << EOF > /etc/systemd/system/powerstrip.service
 [Unit]
 Description=Powerstrip Server
 After=powerstrip-flocker.service
@@ -82,7 +110,7 @@ cmd-start-powerstrip() {
   rm -f /var/run/docker.sock
   cmd-docker-remove powerstrip
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
-  docker run -d --name powerstrip \
+  docker run --name powerstrip \
     -v /var/run:/host-var-run \
     -v /etc/powerstrip-demo/adapters.yml:/etc/powerstrip/adapters.yml \
     --link powerstrip-flocker:flocker \
@@ -92,6 +120,7 @@ cmd-start-powerstrip() {
 }
 
 cmd-powerstrip-config() {
+  echo "write /etc/powerstrip-demo/adapters.yml";
   mkdir -p /etc/powerstrip-demo
   cat << EOF >> /etc/powerstrip-demo/adapters.yml
 version: 1
@@ -111,13 +140,14 @@ cmd-flocker-zfs-agent() {
     CONTROLIP="127.0.0.1";
   fi
 
+  echo "configure flocker-zfs-agent";
   cat << EOF > /etc/systemd/system/flocker-zfs-agent.service
 [Unit]
 Description=Flocker ZFS Agent
 
 [Service]
 TimeoutStartSec=0
-ExecStart=/usr/sbin/setenforce 0 && /opt/flocker/bin/flocker-zfs-agent $IP $CONTROLIP
+ExecStart=/opt/flocker/bin/flocker-zfs-agent $IP $CONTROLIP
 
 [Install]
 WantedBy=multi-user.target
@@ -127,6 +157,9 @@ EOF
 }
 
 cmd-flocker-control-service() {
+
+  echo "configure flocker-control-service";
+
   cat << EOF > /etc/systemd/system/flocker-control-service.service
 [Unit]
 Description=Flocker Control Service
@@ -146,14 +179,14 @@ cmd-powerstrip() {
   # write adapters.yml
   cmd-powerstrip-config
 
-  # setup docker on /var/run/docker.real.sock
-  cmd-configure-docker
+  
 
   # write unit files for powerstrip-flocker and powerstrip
   cmd-configure-adapter $@
   cmd-configure-powerstrip
 
   # pull the images first
+  cmd-docker-pull ubuntu:latest
   cmd-docker-pull clusterhq/powerstrip-flocker:latest
   cmd-docker-pull clusterhq/powerstrip:unix-socket
 
@@ -165,11 +198,27 @@ cmd-powerstrip() {
   systemctl start powerstrip.service
 }
 
-cmd-master() {
+# kick off the zfs-agent so it writes /etc/flocker/volume.json
+# then kill it before starting the powerstrip-adapter (which requires the file)
+cmd-setup-zfs-agent() {
+  cmd-flocker-zfs-agent $@
 
+  # setup docker on /var/run/docker.real.sock
+  cmd-configure-docker
+
+  # we need to start the zfs service so we have /etc/flocker/volume.json
+  systemctl daemon-reload
+  systemctl start flocker-zfs-agent.service
+  cmd-wait-for-file /etc/flocker/volume.json
+  systemctl stop flocker-zfs-agent.service
+
+  cmd-powerstrip $@
+}
+
+cmd-master() {
   # write unit files for both services
   cmd-flocker-control-service
-  cmd-flocker-zfs-agent $@
+  cmd-setup-zfs-agent $@
 
   # kick off systemctl
   systemctl daemon-reload
@@ -177,15 +226,16 @@ cmd-master() {
   systemctl enable flocker-zfs-agent.service
   systemctl start flocker-control-service.service
   systemctl start flocker-zfs-agent.service
-  cmd-powerstrip $@
+  
 }
 
 cmd-minion() {
-  cmd-flocker-zfs-agent $@
+  cmd-setup-zfs-agent $@
+
   systemctl daemon-reload
   systemctl enable flocker-zfs-agent.service
   systemctl start flocker-zfs-agent.service
-  cmd-powerstrip $@
+  
 }
 
 usage() {
@@ -225,6 +275,6 @@ main() {
   esac
 }
 
-#
+# 
 
 main "$@"
