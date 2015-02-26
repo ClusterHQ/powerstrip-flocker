@@ -1,3 +1,7 @@
+# powerstrip-flocker demo on Vagrant 
+
+Requirements: vagrant, virtualbox
+
 # step 1
 
 ```
