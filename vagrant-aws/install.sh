@@ -5,6 +5,11 @@ export FLOCKER_CONTROL_PORT=${FLOCKER_CONTROL_PORT:=80}
 # supported distributions: "ubuntu", "redhat" (means centos/fedora)
 export DISTRO=${DISTRO:="ubuntu"}
 
+export FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
+export FLOCKER_CONTROL=`which flocker-control`
+export DOCKER=`which docker`
+export BASH=`which bash`
+
 # on subsequent vagrant ups - vagrant has not mounted /vagrant/install.sh
 # so we copy it into place
 cmd-copy-vagrant-dir() {
@@ -68,13 +73,13 @@ cmd-enable-system-service() {
   fi
   if [[ "$DISTRO" == "ubuntu" ]]; then
     # re-read the config files on disk (supervisorctl always has everything enabled)
-    supervisorctl reread
+    supervisorctl update
   fi
 }
 
 cmd-reload-process-supervisor() {
   if [[ "$DISTRO" == "ubuntu" ]]; then
-    supervisorctl reread
+    supervisorctl update
   fi
   if [[ "$DISTRO" == "redhat" ]]; then
     systemctl daemon-reload
@@ -114,14 +119,15 @@ cmd-restart-docker() {
 # stop and remove a named container
 cmd-docker-remove() {
   echo "remove container $1";
-  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker stop $1 2>/dev/null || true
-  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker rm $1 2>/dev/null || true
+  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER stop $1 2>/dev/null || true
+  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER rm $1 2>/dev/null || true
 }
 
-# docker pull a named container
+# docker pull a named container - this always runs before the docker socket
+# gets reconfigured
 cmd-docker-pull() {
   echo "pull image $1";
-  DOCKER_HOST="unix:///var/run/docker.real.sock" /usr/bin/docker pull $1
+  $DOCKER pull $1
 }
 
 # configure powerstrip-flocker adapter
@@ -139,8 +145,8 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-ExecStart=/usr/bin/bash $cmd
-ExecStop=/usr/bin/bash /srv/vagrant/install.sh docker-remove $service
+ExecStart=$BASH $cmd
+ExecStop=$BASH /srv/vagrant/install.sh docker-remove $service
 
 [Install]
 WantedBy=multi-user.target
@@ -149,7 +155,7 @@ EOF
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/supervisor/conf.d/$service.conf
 [program:$service]
-command=/bin/bash $cmd
+command=$BASH $cmd
 EOF
   # XXX there's no equivalent "ExecStop" command in supervisor...
   fi
@@ -160,13 +166,14 @@ EOF
 # the actual boot command for the powerstrip adapter
 # we run without -d so that process manager can manage the process properly
 cmd-start-adapter() {
+  cmd-fetch-config-from-disk-if-present $@
   cmd-docker-remove powerstrip-flocker
   local HOSTID=$(cmd-get-flocker-uuid)
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
   docker run --name powerstrip-flocker \
     --expose 80 \
     -e "MY_NETWORK_IDENTITY=$IP" \
-    -e "FLOCKER_CONTROL_SERVICE_BASE_URL=http://$CONTROLIP:80/v1" \
+    -e "FLOCKER_CONTROL_BASE_URL=http://$CONTROLIP:80/v1" \
     -e "MY_HOST_UUID=$HOSTID" \
     clusterhq/powerstrip-flocker:latest
 }
@@ -185,8 +192,8 @@ After=powerstrip-flocker.service
 Requires=powerstrip-flocker.service
 
 [Service]
-ExecStart=/usr/bin/bash $cmd
-ExecStop=/usr/bin/bash /srv/vagrant/install.sh docker-remove $service
+ExecStart=$BASH $cmd
+ExecStop=$BASH /srv/vagrant/install.sh docker-remove $service
 
 [Install]
 WantedBy=multi-user.target
@@ -195,7 +202,7 @@ EOF
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/supervisor/conf.d/$service.conf
 [program:$service]
-command=/bin/bash $cmd
+command=$BASH $cmd
 EOF
   fi
 
@@ -241,7 +248,7 @@ EOF
 
 # write systemd unit file for the zfs agent
 cmd-flocker-zfs-agent() {
-  local cmd="/usr/bin/bash /srv/vagrant/install.sh block-start-flocker-zfs-agent $@"
+  local cmd="$BASH /srv/vagrant/install.sh block-start-flocker-zfs-agent $@"
   local service="flocker-zfs-agent"
 
   echo "configure $service";
@@ -273,19 +280,19 @@ EOF
 # we then wait for there to be a powerstrip container
 cmd-block-start-flocker-zfs-agent() {
   # we're called from the outside, so figure out network identity etc
-  cmd-fetch-config-from-disk-if-present
+  cmd-fetch-config-from-disk-if-present $@
   echo "wait for docker socket before starting flocker-zfs-agent";
 
   while ! docker info; do echo "waiting for /var/run/docker.sock" && sleep 1; done;
   # TODO maaaaybe check for powerstrip container running here?
-  /opt/flocker/bin/flocker-zfs-agent $IP $CONTROLIP
+  $FLOCKER_ZFS_AGENT $IP $CONTROLIP
 }
 
 
 # configure control service with process manager
-cmd-flocker-control-service() {
-  local cmd="/opt/flocker/bin/flocker-control -p $FLOCKER_CONTROL_PORT"
-  local service="flocker-control-service"
+cmd-flocker-control() {
+  local cmd="$FLOCKER_CONTROL -p $FLOCKER_CONTROL_PORT"
+  local service="flocker-control"
 
   echo "configure $service"
 
@@ -309,7 +316,7 @@ command=$cmd
 EOF
   fi
 
-  cmd-enable-system-service flocker-control-service
+  cmd-enable-system-service flocker-control
 }
 
 # generic controller for the powerstrip containers
@@ -320,11 +327,6 @@ cmd-powerstrip() {
   # write unit files for powerstrip-flocker and powerstrip
   cmd-configure-adapter $@
   cmd-configure-powerstrip
-
-  # pull the images first
-  cmd-docker-pull ubuntu:latest
-  cmd-docker-pull clusterhq/powerstrip-flocker:latest
-  cmd-docker-pull clusterhq/powerstrip:unix-socket
 
   # kick off services
   cmd-reload-process-supervisor
@@ -370,6 +372,11 @@ cmd-init() {
   # if we're not being passed IP addresses as arguments, see if we can fetch
   # them from disk
   cmd-fetch-config-from-disk-if-present
+
+  # pull the images first
+  cmd-docker-pull ubuntu:latest
+  cmd-docker-pull clusterhq/powerstrip-flocker:latest
+  cmd-docker-pull clusterhq/powerstrip:unix-socket
 }
 
 cmd-master() {
@@ -377,14 +384,14 @@ cmd-master() {
   cmd-init
 
   # write unit files for both services
-  cmd-flocker-control-service
+  cmd-flocker-control
   cmd-setup-zfs-agent $@
 
   cmd-powerstrip $@
 
   # kick off systemctl
   cmd-reload-process-supervisor
-  cmd-start-system-service flocker-control-service
+  cmd-start-system-service flocker-control
   cmd-start-system-service flocker-zfs-agent
 }
 
@@ -407,7 +414,7 @@ install.sh master <your_ip> <control_service>
 install.sh minion <your_ip> <control_service>
 install.sh flocker-zfs-agent
 install.sh block-start-flocker-zfs-agent <your_ip> <control_service>
-install.sh flocker-control-service
+install.sh flocker-control
 install.sh get-flocker-uuid
 install.sh configure-docker
 install.sh configure-powerstrip
@@ -426,7 +433,7 @@ main() {
   minion)                   shift; cmd-minion $@;;
   flocker-zfs-agent)        shift; cmd-flocker-zfs-agent $@;;
   block-start-flocker-zfs-agent) shift; cmd-block-start-flocker-zfs-agent $@;;
-  flocker-control-service)  shift; cmd-flocker-control-service $@;;
+  flocker-control)  shift; cmd-flocker-control $@;;
   get-flocker-uuid)         shift; cmd-get-flocker-uuid $@;;
   configure-docker)         shift; cmd-configure-docker $@;;
   configure-powerstrip)     shift; cmd-configure-powerstrip $@;;
