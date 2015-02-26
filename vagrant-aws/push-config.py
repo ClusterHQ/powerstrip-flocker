@@ -44,4 +44,10 @@ utils.runSSH(masterExternal, ["sudo", "bash", "-c",
 utils.runSSH(minionExternal, ["sudo", "bash", "-c",
         "'echo %s >> /root/.ssh/authorized_keys'" % (masterPubkey,)])
 
+print "Setting up firewall to only allow the minions to connect to the master control service..."
+
+utils.runSSH(masterExternal, ["sudo", "/vagrant/iptables.sh"])
+utils.runSSH(minionExternal, ["sudo", "/vagrant/iptables.sh"])
+
 print "Done! You can now play with docker + powerstrip + flocker on your hosts :)"
+
