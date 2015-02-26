@@ -166,6 +166,7 @@ EOF
 # the actual boot command for the powerstrip adapter
 # we run without -d so that process manager can manage the process properly
 cmd-start-adapter() {
+  cmd-fetch-config-from-disk-if-present $@
   cmd-docker-remove powerstrip-flocker
   local HOSTID=$(cmd-get-flocker-uuid)
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
@@ -279,7 +280,7 @@ EOF
 # we then wait for there to be a powerstrip container
 cmd-block-start-flocker-zfs-agent() {
   # we're called from the outside, so figure out network identity etc
-  cmd-fetch-config-from-disk-if-present
+  cmd-fetch-config-from-disk-if-present $@
   echo "wait for docker socket before starting flocker-zfs-agent";
 
   while ! docker info; do echo "waiting for /var/run/docker.sock" && sleep 1; done;
