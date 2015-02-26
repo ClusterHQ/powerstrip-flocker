@@ -22,7 +22,7 @@ utils.pushConfig(masterExternal, instances)
 
 # install powerstrip, powerstrip-flocker, and configure both nodes to start
 # flocker-control and flocker-zfs service.
-print "Setting up powerstrip, powerstrip-flocker & flocker!"
+print "Setting up powerstrip, powerstrip-flocker & flocker."
 
 utils.runSSHPassthru(masterExternal, ["sudo", "/vagrant/install.sh", "master"])
 utils.runSSHPassthru(minionExternal, ["sudo", "/vagrant/install.sh", "minion"])
