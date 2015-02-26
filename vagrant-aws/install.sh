@@ -6,7 +6,7 @@ export FLOCKER_CONTROL_PORT=${FLOCKER_CONTROL_PORT:=80}
 export DISTRO=${DISTRO:="ubuntu"}
 
 export FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
-export FLOCKER_CONTROL_SERVICE=`which flocker-control-service`
+export FLOCKER_CONTROL=`which flocker-control`
 export DOCKER=`which docker`
 export BASH=`which bash`
 
@@ -171,7 +171,7 @@ cmd-start-adapter() {
   docker run --name powerstrip-flocker \
     --expose 80 \
     -e "MY_NETWORK_IDENTITY=$IP" \
-    -e "FLOCKER_CONTROL_SERVICE_BASE_URL=http://$CONTROLIP:80/v1" \
+    -e "FLOCKER_CONTROL_BASE_URL=http://$CONTROLIP:80/v1" \
     -e "MY_HOST_UUID=$HOSTID" \
     clusterhq/powerstrip-flocker:latest
 }
@@ -288,9 +288,9 @@ cmd-block-start-flocker-zfs-agent() {
 
 
 # configure control service with process manager
-cmd-flocker-control-service() {
-  local cmd="$FLOCKER_CONTROL_SERVICE -p $FLOCKER_CONTROL_PORT"
-  local service="flocker-control-service"
+cmd-flocker-control() {
+  local cmd="$FLOCKER_CONTROL -p $FLOCKER_CONTROL_PORT"
+  local service="flocker-control"
 
   echo "configure $service"
 
@@ -314,7 +314,7 @@ command=$cmd
 EOF
   fi
 
-  cmd-enable-system-service flocker-control-service
+  cmd-enable-system-service flocker-control
 }
 
 # generic controller for the powerstrip containers
@@ -382,14 +382,14 @@ cmd-master() {
   cmd-init
 
   # write unit files for both services
-  cmd-flocker-control-service
+  cmd-flocker-control
   cmd-setup-zfs-agent $@
 
   cmd-powerstrip $@
 
   # kick off systemctl
   cmd-reload-process-supervisor
-  cmd-start-system-service flocker-control-service
+  cmd-start-system-service flocker-control
   cmd-start-system-service flocker-zfs-agent
 }
 
@@ -412,7 +412,7 @@ install.sh master <your_ip> <control_service>
 install.sh minion <your_ip> <control_service>
 install.sh flocker-zfs-agent
 install.sh block-start-flocker-zfs-agent <your_ip> <control_service>
-install.sh flocker-control-service
+install.sh flocker-control
 install.sh get-flocker-uuid
 install.sh configure-docker
 install.sh configure-powerstrip
@@ -431,7 +431,7 @@ main() {
   minion)                   shift; cmd-minion $@;;
   flocker-zfs-agent)        shift; cmd-flocker-zfs-agent $@;;
   block-start-flocker-zfs-agent) shift; cmd-block-start-flocker-zfs-agent $@;;
-  flocker-control-service)  shift; cmd-flocker-control-service $@;;
+  flocker-control)  shift; cmd-flocker-control $@;;
   get-flocker-uuid)         shift; cmd-get-flocker-uuid $@;;
   configure-docker)         shift; cmd-configure-docker $@;;
   configure-powerstrip)     shift; cmd-configure-powerstrip $@;;
