@@ -9,7 +9,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     settings = YAML.load(File.open("settings.yml").read)
     aws.access_key_id = settings["aws_access_key_id"]
     aws.secret_access_key = settings["aws_secret_access_key"]
-    aws.keypair_name = settings["keypair_name"]
+    aws.keypair_name = settings["aws_keypair_name"]
 
     aws.ami = "ami-32015d5a" # flocker-only base
     #aws.ami = "ami-3cf8b154" # ubuntu 14.04
