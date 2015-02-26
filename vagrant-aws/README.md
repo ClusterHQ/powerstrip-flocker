@@ -12,7 +12,7 @@ Ensure that you have the following installed on your system:
 
 ## Setup
 
-#### Get vagrant-aws:
+#### Get vagrant-aws
 
 We need the vagrant AWS plugin to provision machines with AWS - once vagrant is installed, type:
 
@@ -88,5 +88,7 @@ What just happened was the following:
 ## caveat
 
 Warning: do not use this for anything!
-As well as being as a massive hack, this demo uses ephemeral instance storage for the ZFS pool.
+As well as being as a massive hack, and a prototype, this demo uses ephemeral instance storage for the ZFS pool.
 So you *will* lose your data.
+
+[Let us know what you think!](https://github.com/ClusterHQ/powerstrip-flocker/issues/new)
