@@ -31,7 +31,7 @@ cmd-configure-docker() {
   if [[ "$DISTRO" == "redhat" ]]; then
     # docker itself listens on docker.real.sock and powerstrip listens on docker.sock
     cat << EOF > /etc/sysconfig/docker-network
-DOCKER_NETWORK_OPTIONS=-H unix:///var/run/docker.real.sock
+DOCKER_NETWORK_OPTIONS=-H unix:///var/run/docker.real.sock --dns 8.8.8.8 --dns 8.8.4.4
 EOF
 
     # the key here is removing the selinux=yes option from docker
@@ -46,19 +46,8 @@ EOF
 
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/default/docker
-# Docker Upstart and SysVinit configuration file
-
-# Customize location of Docker binary (especially for development testing).
-#DOCKER="/usr/local/bin/docker"
-
 # Use DOCKER_OPTS to modify the daemon startup options.
 DOCKER_OPTS="-H unix:///var/run/docker.real.sock --dns 8.8.8.8 --dns 8.8.4.4"
-
-# If you need Docker to use an HTTP proxy, it can also be specified here.
-#export http_proxy="http://127.0.0.1:3128/"
-
-# This is also a handy place to tweak where Docker's temporary files go.
-#export TMPDIR="/mnt/bigdrive/docker-tmp"
 EOF
   fi
   rm -f /var/run/docker.sock
