@@ -80,5 +80,5 @@ We've put together a special demo preview environment:
 
 You can try out our demo environment either with vagrant on local files, or on AWS:
 
-* Vagrant: https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant
-* AWS: https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant-aws
+* [Vagrant](https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant)
+* [AWS](https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant-aws)
