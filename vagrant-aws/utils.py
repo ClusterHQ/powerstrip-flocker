@@ -1,6 +1,7 @@
 from pipes import quote
 import subprocess
 import yaml
+import os
 
 config = yaml.load(open("settings.yml"))
 
@@ -9,6 +10,12 @@ def runSSH(ip, command):
             config["remote_server_username"],
             ip, " ".join(map(quote, command)))
     return subprocess.check_output(command, shell=True)
+
+def runSSHPassthru(ip, command):
+    command = 'ssh -i %s %s@%s %s' % (config["private_key_path"],
+            config["remote_server_username"],
+            ip, " ".join(map(quote, command)))
+    return os.system(command)
 
 def pushConfig(text, instances):
     f = open("master_address", "w")
