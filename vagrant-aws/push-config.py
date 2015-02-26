@@ -22,5 +22,26 @@ utils.pushConfig(masterExternal, instances)
 
 # install powerstrip, powerstrip-flocker, and configure both nodes to start
 # flocker-control and flocker-zfs service.
+print "Setting up powerstrip, powerstrip-flocker & flocker!"
+
 utils.runSSHPassthru(masterExternal, ["sudo", "/vagrant/install.sh", "master"])
 utils.runSSHPassthru(minionExternal, ["sudo", "/vagrant/install.sh", "minion"])
+
+print "Finished setting up powerstrip, powerstrip-flocker & flocker!"
+print "Now configuring SSH keys on hosts..."
+
+utils.runSSHRaw(masterExternal, 'sudo /vagrant/keygen.sh')
+utils.runSSHRaw(minionExternal, 'sudo /vagrant/keygen.sh')
+
+masterPubkey = utils.runSSH(masterExternal,
+        ["sudo", "cat", "/root/.ssh/id_rsa.pub"]).strip()
+minionPubkey = utils.runSSH(masterExternal,
+        ["sudo", "cat", "/root/.ssh/id_rsa.pub"]).strip()
+
+# Make root on the hosts trust eachother
+utils.runSSH(masterExternal, ["sudo", "bash", "-c",
+        "'echo %s >> /root/.ssh/authorized_keys'" % (minionPubkey,)])
+utils.runSSH(minionExternal, ["sudo", "bash", "-c",
+        "'echo %s >> /root/.ssh/authorized_keys'" % (masterPubkey,)])
+
+print "Done! You can now play with docker + powerstrip + flocker on your hosts :)"
