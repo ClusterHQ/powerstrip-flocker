@@ -10,7 +10,6 @@ apt-get -y install build-essential gawk alien fakeroot linux-headers-$(uname -r)
 # As of Feb 18 2015, recommended ZoL revisions from Richard Yao:
 good_zfs_version="d958324f97f4668a2a6e4a6ce3e5ca09b71b31d9"
 good_spl_version="47af4b76ffe72457166e4abfcfe23848ac51811a"
-zfs_pool_name="flocker"
 
 # Compile and install spl
 cd ~/
@@ -34,14 +33,3 @@ make
 make deb
 sudo dpkg -i *.deb
 
-# TODO - reboot!
-
-if [[ -b /dev/xvdb ]]; then
-    echo "Detected EBS environment, setting up real zpool..."
-    umount /mnt
-    zpool create $zfs_pool_name /dev/xvdb
-elif [[ ! -b /dev/sdb ]]; then
-    echo "Setting up a toy zpool..."
-    truncate -s 10G /$zfs_pool_name-datafile
-    zpool create $zfs_pool_name /$zfs_pool_name-datafile
-fi

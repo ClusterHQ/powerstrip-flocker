@@ -40,3 +40,7 @@ node2$ docker run -v /flocker/test:/data ubuntu cat /data/foo
 data
 node2$
 ```
+
+Warning: do not use this for anything!
+As well as being as a massive hack, this demo uses ephemeral instance storage for the ZFS pool.
+So you *will* lose your data.
