@@ -34,6 +34,10 @@ echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/dock
 apt-get update
 apt-get -y install lxc-docker
 
+sed -i'backup' s/USE_KDUMP=0/USE_KDUMP=1/g /etc/default/kdump-tools
+
 apt-get -y install supervisor
 
-sed -i'backup' s/USE_KDUMP=0/USE_KDUMP=1/g /etc/default/kdump-tools
+docker pull ubuntu:latest
+docker pull clusterhq/powerstrip-flocker:latest
+docker pull clusterhq/powerstrip:unix-socket
