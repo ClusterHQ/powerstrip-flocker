@@ -59,7 +59,7 @@ On the first node we write some data to a flocker volume using nothing but the s
 
 ```bash
 $ vagrant ssh node1
-node1$ docker run -v /flocker/test:/data ubuntu sh -c "cat data > /data/foo"
+node1$ docker run -v /flocker/test:/data ubuntu sh -c "echo data > /data/foo"
 node1$ exit
 ```
 
