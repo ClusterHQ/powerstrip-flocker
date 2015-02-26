@@ -283,7 +283,7 @@ cmd-block-start-flocker-zfs-agent() {
   cmd-fetch-config-from-disk-if-present $@
   echo "waiting for docker socket before starting flocker-zfs-agent";
 
-  while ! (docker info
+  while ! (docker info \
         && sleep 2 && docker info && sleep 2 && docker info \
         && sleep 2 && docker info && sleep 2 && docker info \
         && sleep 2 && docker info && sleep 2 && docker info \
