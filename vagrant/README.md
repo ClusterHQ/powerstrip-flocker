@@ -63,8 +63,6 @@ What just happened was the following:
  * flocker then moved the volume over the node2
  * the data that was written to node1 was read from node2
 
-## caveat
+## Caveat
 
-Warning: do not use this for anything!
-As well as being as a massive hack, this demo uses ephemeral instance storage for the ZFS pool.
-So you *will* lose your data.
+Warning: do not use this for anything! This is a dev snapshot of powerstrip, flocker and powerstrip-flocker, and powerstrip itself is just a prototyping system.
