@@ -23,8 +23,10 @@ See README.md in this directory instead.
 
 # making a new AMI
 
-* Log into node1 with `vagrant ssh node1` and run `sudo mv ~/.ssh/authorized_keys ~/.ssh/authorized_keys.disabled`.
+* Log into node1 with `vagrant ssh node1`
+* `sudo mv ~/.ssh/authorized_keys ~/.ssh/authorized_keys.disabled`
 * `sudo rm /vagrant/{settings.yml,access_key_id.txt,secret_access_key.txt}` (ideally this would be a secure destroy, or not have this file copied in in the first place)
+* Make sure there is no zfs pool (`sudo zpool status`) - run `sudo zpool destroy -f flocker` if necessary - the ephemeral instance store won't be there next time an instance is spawned from this AMI.
 * Log into the AWS console and create an AMI from the current running state of node1 (named "flocker-powerstrip master").
 * Now you can revert any changes you made to `Vagrantfile` and `bootstrap.sh`, and put the new AMI ID into the Vagrantfile.
 
