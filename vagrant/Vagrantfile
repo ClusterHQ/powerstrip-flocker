@@ -11,8 +11,8 @@ VAGRANTFILE_API_VERSION = "2"
 ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box = "vagrant-powerstrip-flocker-demo"
-  config.vm.box_url = "http://storage.googleapis.com/experiments-clusterhq/powerstrip-flocker-demo/tutorial-flocker-tutorial-0.3.2%2Bdoc1-1786-gbcc7bb4.box"
+  config.vm.box = "vagrant-powerstrip-flocker-demo-pulled-images"
+  config.vm.box_url = "http://storage.googleapis.com/experiments-clusterhq/powerstrip-flocker-demo/vagrant-powerstrip-flocker-demo.box"
 
   if Vagrant.has_plugin?("vagrant-cachier")
     config.cache.scope = :box
@@ -22,7 +22,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node1.vm.network :private_network, :ip => "172.16.255.250"
     node1.vm.hostname = "node1"
     node1.vm.provision "shell", inline: <<SCRIPT
-bash /vagrant/install.sh master 172.16.255.250 172.16.255.250
+DISTRO=redhat bash /vagrant/install.sh master 172.16.255.250 172.16.255.250
 SCRIPT
   end
 
@@ -30,7 +30,7 @@ SCRIPT
     node2.vm.network :private_network, :ip => "172.16.255.251"
     node2.vm.hostname = "node2"
     node2.vm.provision "shell", inline: <<SCRIPT
-bash /vagrant/install.sh minion 172.16.255.251 172.16.255.250
+DISTRO=redhat bash /vagrant/install.sh minion 172.16.255.251 172.16.255.250
 SCRIPT
   end
 end
