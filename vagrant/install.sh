@@ -65,9 +65,39 @@ EOF
 }
 
 
-cmd-link-systemd-target() {
+cmd-enable-system-service() {
   if [[ "$DISTRO" == "redhat" ]]; then
     ln -sf /etc/systemd/system/$1.service /etc/systemd/system/multi-user.target.wants/$1.service
+  fi
+}
+
+cmd-reload-process-supervisor() {
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    supervisorctl reread
+  fi
+  if [[ "$DISTRO" == "redhat" ]]; then
+    systemctl daemon-reload
+  fi
+}
+
+cmd-start-system-service() {
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    supervisorctl start $1
+  fi
+  if [[ "$DISTRO" == "redhat" ]]; then
+    # systemd requires services to be enabled before they're started, but
+    # supervisor enables services by default (?)
+    systemctl enable $1.service
+    systemctl start $1.service
+  fi
+}
+
+cmd-stop-system-service() {
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    supervisorctl stop $1
+  fi
+  if [[ "$DISTRO" == "redhat" ]]; then
+    systemctl stop $1.service
   fi
 }
 
@@ -102,7 +132,7 @@ EOF
   fi
   # XXX need ubuntu variant
 
-  cmd-link-systemd-target powerstrip-flocker
+  cmd-enable-system-service powerstrip-flocker
 }
 
 cmd-start-adapter() {
@@ -121,23 +151,32 @@ cmd-start-adapter() {
 
 cmd-configure-powerstrip() {
   echo "configure powerstrip";
+
+  cmd="/usr/bin/bash /vagrant/install.sh start-powerstrip"
+  service="powerstrip"
+
   if [[ "$DISTRO" == "redhat" ]]; then
-    cat << EOF > /etc/systemd/system/powerstrip.service
+    cat << EOF > /etc/systemd/system/$service.service
 [Unit]
 Description=Powerstrip Server
 After=powerstrip-flocker.service
 Requires=powerstrip-flocker.service
 
 [Service]
-ExecStart=/usr/bin/bash /vagrant/install.sh start-powerstrip
+ExecStart=$cmd
 
 [Install]
 WantedBy=multi-user.target
 EOF
   fi
-  # XXX need ubuntu variant
+  if [[ "$DISTRO" == "ubuntu" ]]; then
+    cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=$cmd
+EOF
+  fi
 
-  cmd-link-systemd-target powerstrip
+  cmd-enable-system-service $service
 }
 
 cmd-start-powerstrip() {
@@ -149,6 +188,7 @@ cmd-start-powerstrip() {
     -v /etc/powerstrip-demo/adapters.yml:/etc/powerstrip/adapters.yml \
     --link powerstrip-flocker:flocker \
     clusterhq/powerstrip:unix-socket
+  # XXX sleep 5 should be replaced by wait-for-file
   sleep 5
   # XXX should use user defined in settings.yml here
   chgrp vagrant /var/run/docker.sock
@@ -191,7 +231,7 @@ EOF
   fi
   # XXX need ubuntu
 
-  cmd-link-systemd-target flocker-zfs-agent
+  cmd-enable-system-service flocker-zfs-agent
 }
 
 cmd-flocker-control-service() {
@@ -213,7 +253,7 @@ EOF
   fi
   # XXX need ubuntu
 
-  cmd-link-systemd-target flocker-control-service
+  cmd-enable-system-service flocker-control-service
 }
 
 cmd-powerstrip() {
@@ -244,12 +284,12 @@ cmd-setup-zfs-agent() {
 
   # setup docker on /var/run/docker.real.sock
   cmd-configure-docker
-
+  
   # we need to start the zfs service so we have /etc/flocker/volume.json
-  systemctl daemon-reload
-  systemctl start flocker-zfs-agent.service
+  cmd-reload-process-supervisor
+  cmd-start-system-service flocker-zfs-agent
   cmd-wait-for-file /etc/flocker/volume.json
-  systemctl stop flocker-zfs-agent.service
+  cmd-stop-system-service flocker-zfs-agent
 
   cmd-powerstrip $@
 }
@@ -260,20 +300,16 @@ cmd-master() {
   cmd-setup-zfs-agent $@
 
   # kick off systemctl
-  systemctl daemon-reload
-  systemctl enable flocker-control-service.service
-  systemctl enable flocker-zfs-agent.service
-  systemctl start flocker-control-service.service
-  systemctl start flocker-zfs-agent.service
+  cmd-reload-process-supervisor
+  cmd-start-system-service flocker-control-service
+  cmd-start-system-service flocker-zfs-agent
 }
 
 cmd-minion() {
   cmd-setup-zfs-agent $@
 
-  systemctl daemon-reload
-  systemctl enable flocker-zfs-agent.service
-  systemctl start flocker-zfs-agent.service
-  
+  cmd-reload-process-supervisor
+  cmd-start-system-service flocker-zfs-agent
 }
 
 usage() {
