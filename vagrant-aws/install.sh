@@ -308,7 +308,21 @@ cmd-setup-zfs-agent() {
   cmd-powerstrip $@
 }
 
+cmd-fetch-config-from-disk-if-present() {
+  # $1 is <your_ip>, $2 is <control_service>
+  if [[ -f /etc/flocker/master_address ]]; then
+      $1=`cat /etc/flocker/master_address`
+  fi
+  if [[ -f /etc/flocker/my_address ]]; then
+      $2=`cat /etc/flocker/my_address`
+  fi
+}
+
 cmd-master() {
+  # if we're not being passed IP addresses as arguments, see if we can fetch
+  # them from disk
+  cmd-fetch-config-from-disk-if-present
+
   # write unit files for both services
   cmd-flocker-control-service
   cmd-setup-zfs-agent $@
@@ -320,6 +334,10 @@ cmd-master() {
 }
 
 cmd-minion() {
+  # if we're not being passed IP addresses as arguments, see if we can fetch
+  # them from disk
+  cmd-fetch-config-from-disk-if-present
+
   cmd-setup-zfs-agent $@
 
   cmd-reload-process-supervisor
@@ -329,8 +347,8 @@ cmd-minion() {
 usage() {
 cat <<EOF
 Usage:
-install.sh master
-install.sh minion
+install.sh master <your_ip> <control_service>
+install.sh minion <your_ip> <control_service>
 install.sh flocker-zfs-agent
 install.sh flocker-control-service
 install.sh get-flocker-uuid
