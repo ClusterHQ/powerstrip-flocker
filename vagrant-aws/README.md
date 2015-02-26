@@ -87,7 +87,7 @@ What just happened was the following:
  * flocker then moved the volume over the node2
  * the data that was written to node1 was read from node2
 
-## caveat
+## Caveat
 
 Warning: do not use this for anything!
 As well as being as a massive hack, and a prototype, this demo uses ephemeral instance storage for the ZFS pool.
