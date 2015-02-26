@@ -15,6 +15,13 @@ for n in range(1, 3):
     instances.append((externalIP, internalIP))
 
 # node1 is, according to the Vagrantfile, where the control service gets
-# started
+# started.
 masterExternal, masterInternal = instances[0]
+minionExternal, minionInternal = instances[1]
 utils.pushConfig(masterExternal, instances)
+
+# install powerstrip, powerstrip-flocker, and configure both nodes to start
+# flocker-control and flocker-zfs service.
+import os
+os.system("./install.sh master %s" % (masterExternal,))
+os.system("./install.sh minion %s" % (minionExternal,))

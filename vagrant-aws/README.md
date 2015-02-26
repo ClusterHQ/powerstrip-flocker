@@ -15,22 +15,21 @@ $ git clone https://github.com/clusterhq/powerstrip-flocker
 $ cd powerstrip-flocker/vagrant-aws
 ```
 
-Create a new file called settings.yml:
+Copy settings.yml.sample to settings.yml and fill in the details.
 
 ```
-$ cat <<EOF > settings.yml
-ssh_private_key_path: /Users/luke/Downloads/luke.pem
-aws_keypair_name: luke
-aws_access_key_id: 12345
-aws_secret_access_key: abcde
-EOF
+$ vagrant up --provider=aws
 ```
 
+Wait for your nodes to come up, then teach them about eachother:
+
 ```
-$ vagrant up
+$ ./push-config.py
 ```
 
-Wait for your nodes to come up, then log into them to run:
+This will also set up system services on the nodes.
+
+
 
 ```
 $ vagrant ssh node1
@@ -41,4 +40,3 @@ node2$ docker run -v /flocker/test:/data ubuntu cat /data/foo
 data
 node2$
 ```
-
