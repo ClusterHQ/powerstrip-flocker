@@ -1,6 +1,6 @@
 # powerstrip-flocker demo on Vagrant 
 
-This demo wil guide you through the steps needed to run the multi-node powerstrip-flocker demo using Vagrant.
+This demo will guide you through the steps needed to run the multi-node powerstrip-flocker demo using Vagrant.
 
 ## Requirements
 
