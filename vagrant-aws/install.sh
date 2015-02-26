@@ -281,9 +281,13 @@ EOF
 cmd-block-start-flocker-zfs-agent() {
   # we're called from the outside, so figure out network identity etc
   cmd-fetch-config-from-disk-if-present $@
-  echo "wait for docker socket before starting flocker-zfs-agent";
+  echo "waiting for docker socket before starting flocker-zfs-agent";
 
-  while ! docker info; do echo "waiting for /var/run/docker.sock" && sleep 1; done;
+  while ! (docker info
+        && sleep 2 && docker info && sleep 2 && docker info \
+        && sleep 2 && docker info && sleep 2 && docker info \
+        && sleep 2 && docker info && sleep 2 && docker info \
+        && sleep 2 && docker info); do echo "waiting for /var/run/docker.sock"; sleep 1; done;
   # TODO maaaaybe check for powerstrip container running here?
   $FLOCKER_ZFS_AGENT $IP $CONTROLIP
 }
