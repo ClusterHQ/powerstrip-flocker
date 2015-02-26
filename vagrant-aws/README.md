@@ -1,6 +1,6 @@
 # powerstrip-flocker demo on AWS
 
-This demo wil guide you through the steps needed to run the multiple node powerstrip-flocker demo using AWS.  We use Vagrant to spin up and manage the AWS nodes.
+This demo wil guide you through the steps needed to run a multi-node powerstrip-flocker demo using AWS.  We use Vagrant to spin up and manage the AWS nodes.
 
 ## Requirements
 
@@ -8,7 +8,7 @@ Ensure that you have the following installed on your system:
 
  * [virtualbox](https://www.virtualbox.org/wiki/Downloads)
  * [vagrant](http://www.vagrantup.com/downloads.html)
- * [python](https://www.python.org/downloads/)
+ * [python](https://www.python.org/downloados/)
 
 ## Setup
 
@@ -17,7 +17,7 @@ Ensure that you have the following installed on your system:
 We need the vagrant AWS plugin to provision machines with AWS - once vagrant is installed, type:
 
 ```bash
-$ vagrant plugins install vagrant-aws
+$ vagrant plugin install vagrant-aws
 ```
 
 #### Clone repository
@@ -77,6 +77,15 @@ node2$ exit
 What just happened was the following:
 
  * the `docker run` command on node1 was intercepted by powerstrip
+ * powerstrip sent the volume information to powerstrip-flocker
+ * powerstrip-flocker created the volume with flocker
+ * the container started and wrote some data to the volume
+ * the `docker run` command on node2 was sent to powerstrip-flocker
+ * it noticed that this volume had already been created on node1
+ * flocker then moved the volume over the node2
+ * the data that was written to node1 was read from node2
+
+## caveat
 
 Warning: do not use this for anything!
 As well as being as a massive hack, this demo uses ephemeral instance storage for the ZFS pool.
