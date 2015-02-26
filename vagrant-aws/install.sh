@@ -136,8 +136,6 @@ EOF
 
 cmd-start-adapter() {
   cmd-docker-remove powerstrip-flocker
-  local IP="$1";
-  local CONTROLIP="$2";
   local HOSTID=$(cmd-get-flocker-uuid)
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
   docker run --name powerstrip-flocker \
@@ -207,13 +205,6 @@ EOF
 }
 
 cmd-flocker-zfs-agent() {
-  local IP="$1";
-  local CONTROLIP="$2";
-
-  if [[ -z "$CONTROLIP" ]]; then
-    CONTROLIP="127.0.0.1";
-  fi
-
   local cmd="/opt/flocker/bin/flocker-zfs-agent $IP $CONTROLIP"
   local service="flocker-zfs-agent"
 
@@ -310,11 +301,18 @@ cmd-setup-zfs-agent() {
 
 cmd-fetch-config-from-disk-if-present() {
   # $1 is <your_ip>, $2 is <control_service>
-  if [[ -f /etc/flocker/master_address ]]; then
-      $1=`cat /etc/flocker/master_address`
-  fi
   if [[ -f /etc/flocker/my_address ]]; then
-      $2=`cat /etc/flocker/my_address`
+      IP=`cat /etc/flocker/my_address`
+  else
+      IP=$1
+  fi
+  if [[ -f /etc/flocker/master_address ]]; then
+      CONTROLIP=`cat /etc/flocker/master_address`
+  else
+      CONTROLIP=$2
+  fi
+  if [[ -z "$CONTROLIP" ]]; then
+    CONTROLIP="127.0.0.1";
   fi
 }
 
