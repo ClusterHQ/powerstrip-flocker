@@ -34,4 +34,6 @@ echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/dock
 apt-get update
 apt-get -y install lxc-docker
 
+apt-get -y install supervisor
+
 sed -i'backup' s/USE_KDUMP=0/USE_KDUMP=1/g /etc/default/kdump-tools
