@@ -78,7 +78,16 @@ Then [let us know what you think](https://github.com/ClusterHQ/powerstrip-flocke
 
 We've put together a special demo preview environment:
 
-You can try out our demo environment either with vagrant on local files, or on AWS:
+You can try out our demo environment either with vagrant on local files, or on AWS.
 
-* [Vagrant](https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant)
-* [AWS](https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant-aws)
+#### Vagrant
+
+This uses vagrant to bring up the demo on your local machine.
+
+[Click here for the Vagrant demo](https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant)
+
+#### AWS
+
+This uses vagrant to bring up the demo on AWS EC2 instances.
+
+[Click here for the AWS demo](https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant-aws)
