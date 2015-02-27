@@ -44,13 +44,19 @@ def pushConfig(text, instances):
         f.close()
 
         for f in ('master_address', 'my_address', 'minions'):
-            scp = ("scp -i %(private_key_path)s %(filename)s "
-                   "%(remote_server_username)s@%(external_ip)s:/tmp/%(filename)s") % dict(
-                        private_key_path=config["private_key_path"],
-                        remote_server_username=config["remote_server_username"],
-                        external_ip=externalIP, filename=f)
-            subprocess.check_output(scp, shell=True)
+            scp(f, externalIP, "/tmp/%s" % (f,))
             runSSH(externalIP, ['sudo', 'mv', '/tmp/%s' % (f,), '/etc/flocker/%s' % (f,)])
             print "Pushed", f, "to", externalIP
 
     print "Finished telling all nodes about the master."
+
+def scp(local_path, external_ip, remote_path,
+        private_key_path=config["private_key_path"],
+        remote_server_username=config["remote_server_username"]):
+    scp = ("scp -i %(private_key_path)s %(local_path)s "
+           "%(remote_server_username)s@%(external_ip)s:%(remote_path)s") % dict(
+                private_key_path=config["private_key_path"],
+                remote_server_username=config["remote_server_username"],
+                external_ip=external_ip, remote_path=remote_path,
+                local_path=local_path)
+    return subprocess.check_output(scp, shell=True)

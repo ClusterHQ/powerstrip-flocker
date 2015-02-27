@@ -61,7 +61,7 @@ On the first node we write some data to a flocker volume using nothing but the s
 
 ```bash
 $ vagrant ssh node1
-node1$ docker run -v /flocker/test:/data ubuntu sh -c "echo data > /data/foo"
+node1$ sudo docker run -v /flocker/test:/data ubuntu sh -c "echo powerflock > /data/file.txt"
 node1$ exit
 ```
 
@@ -69,8 +69,8 @@ On the second node we trigger a migration of that data and read it - using nothi
 
 ```bash
 $ vagrant ssh node2
-node2$ docker run -v /flocker/test:/data ubuntu cat /data/foo
-data
+node2$ sudo docker run -v /flocker/test:/data ubuntu cat /data/file.txt
+powerflock
 node2$ exit
 ```
 
@@ -87,7 +87,7 @@ What just happened was the following:
  * flocker then moved the volume over the node2
  * the data that was written to node1 was read from node2
 
-## caveat
+## Caveat
 
 Warning: do not use this for anything!
 As well as being as a massive hack, and a prototype, this demo uses ephemeral instance storage for the ZFS pool.
