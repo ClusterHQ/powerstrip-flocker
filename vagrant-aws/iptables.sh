@@ -10,6 +10,8 @@ iptables-start() {
 
   # Allow incoming ssh only
   iptables -A INPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+  iptables -A INPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+  iptables -A INPUT -m conntrack -j ACCEPT  --ctstate RELATED,ESTABLISHED
 }
 
 iptables-middle() {
