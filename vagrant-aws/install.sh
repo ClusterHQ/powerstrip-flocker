@@ -284,10 +284,9 @@ cmd-block-start-flocker-zfs-agent() {
   echo "waiting for docker socket before starting flocker-zfs-agent";
 
   while ! (docker info \
-        && sleep 2 && docker info && sleep 2 && docker info \
-        && sleep 2 && docker info && sleep 2 && docker info \
-        && sleep 2 && docker info && sleep 2 && docker info \
-        && sleep 2 && docker info); do echo "waiting for /var/run/docker.sock"; sleep 1; done;
+        && sleep 1 && docker info && sleep 1 && docker info \
+        && sleep 1 && docker info && sleep 1 && docker info \
+        && sleep 1 && docker info); do echo "waiting for /var/run/docker.sock"; sleep 1; done;
   # TODO maaaaybe check for powerstrip container running here?
   $FLOCKER_ZFS_AGENT $IP $CONTROLIP
 }
