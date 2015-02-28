@@ -13,3 +13,6 @@ Thumbs.db
 ###########
 .vagrant
 settings.yml
+vagrant-aws/master_address
+vagrant-aws/minions
+vagrant-aws/my_address

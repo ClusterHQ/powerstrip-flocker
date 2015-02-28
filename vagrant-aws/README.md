@@ -37,7 +37,7 @@ Copy `settings.yml.sample` to `settings.yml` and fill in the details.
 
 #### `vagrant up`
 
-Now we type `vagrant up` which will spin up the two nodes.
+Now we type `vagrant up --provider=aws` which will spin up the two nodes.
 
 ```bash
 $ vagrant up --provider=aws
