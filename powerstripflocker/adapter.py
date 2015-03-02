@@ -33,15 +33,13 @@ class AdapterResource(resource.Resource):
         """
         Handle a pre-hook: either create a filesystem, or move it in place.
         """
-        requestJson = json.loads(request.content.read())
-        if requestJson["DockerVolumesExtensionVersion"] != 1:
+        json_parsed = json.loads(request.content.read())
+        if json_parsed["DockerVolumesExtensionVersion"] != 1:
             raise Exception("unsupported docker volume extension version for request: %s" %
-                (requestJson,))
+                (json_parsed,))
 
         pprint.pprint(os.environ)
         # BASE_URL like http://control-service/v1/ ^
-        json_payload = requestJson["ClientRequest"]["Body"]
-        json_parsed = json.loads(json_payload)
 
         self.base_url = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
         self.ip = os.environ.get("MY_NETWORK_IDENTITY")
