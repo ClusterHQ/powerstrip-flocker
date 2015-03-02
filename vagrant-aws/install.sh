@@ -171,11 +171,11 @@ cmd-start-adapter() {
   local HOSTID=$(cmd-get-flocker-uuid)
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
   docker run --name powerstrip-flocker \
-    --expose 80 \
+    --net=host \
     -e "MY_NETWORK_IDENTITY=$IP" \
     -e "FLOCKER_CONTROL_SERVICE_BASE_URL=http://$CONTROLIP:80/v1" \
     -e "MY_HOST_UUID=$HOSTID" \
-    clusterhq/powerstrip-flocker:latest
+    lmarsden/powerstrip-flocker:docker-volume-extension
 }
 
 cmd-configure-powerstrip() {
@@ -238,11 +238,8 @@ cmd-powerstrip-config() {
   mkdir -p /etc/powerstrip-demo
   cat << EOF >> /etc/powerstrip-demo/adapters.yml
 version: 1
-endpoints:
-  "POST /*/containers/create":
-    pre: [flocker]
-adapters:
-  flocker: http://flocker/flocker-adapter
+endpoints: {}
+adapters: {}
 EOF
 }
 
@@ -449,6 +446,6 @@ main() {
   esac
 }
 
-# 
+#
 
 main "$@"
