@@ -34,6 +34,7 @@ class AdapterResource(resource.Resource):
         Handle a pre-hook: either create a filesystem, or move it in place.
         """
         json_parsed = json.loads(request.content.read())
+        print ">>> called with", json_parsed
         if json_parsed["DockerVolumesExtensionVersion"] != 1:
             raise Exception("unsupported docker volume extension version for request: %s" %
                 (json_parsed,))
@@ -146,6 +147,7 @@ class AdapterResource(resource.Resource):
                 else:
                     # This is how you indicate not handling this request
                     new_json["ModifiedHostPath"] = ""
+                print "<<< responding with", new_json
                 request.write(json.dumps(new_json))
                 request.finish()
             d.addCallback(got_created_and_moved_datasets)
