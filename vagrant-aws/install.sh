@@ -40,10 +40,8 @@ cmd-configure-docker() {
     /usr/sbin/setenforce 0
   fi
 
-  echo "configuring docker to listen on unix:///var/run/docker.real.sock";
-
   if [[ "$DISTRO" == "redhat" ]]; then
-    # docker itself listens on docker.real.sock and powerstrip listens on docker.sock
+    # docker itself listens on docker.sock and powerstrip listens on docker.sock
     cat << EOF > /etc/sysconfig/docker-network
 DOCKER_NETWORK_OPTIONS=--dns 8.8.8.8 --dns 8.8.4.4 --volume-ext=http://localhost:9042/flocker-adapter
 EOF
@@ -119,8 +117,8 @@ cmd-restart-docker() {
 # stop and remove a named container
 cmd-docker-remove() {
   echo "remove container $1";
-  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER stop $1 2>/dev/null || true
-  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER rm $1 2>/dev/null || true
+  DOCKER_HOST="unix:///var/run/docker.sock" $DOCKER stop $1 2>/dev/null || true
+  DOCKER_HOST="unix:///var/run/docker.sock" $DOCKER rm $1 2>/dev/null || true
 }
 
 # docker pull a named container - this always runs before the docker socket
@@ -169,7 +167,7 @@ cmd-start-adapter() {
   cmd-fetch-config-from-disk-if-present $@
   cmd-docker-remove powerstrip-flocker
   local HOSTID=$(cmd-get-flocker-uuid)
-  DOCKER_HOST="unix:///var/run/docker.real.sock" \
+  DOCKER_HOST="unix:///var/run/docker.sock" \
   docker run --name powerstrip-flocker \
     --net=host \
     -e "MY_NETWORK_IDENTITY=$IP" \
@@ -214,7 +212,7 @@ EOF
 cmd-start-powerstrip() {
   rm -f /var/run/docker.sock
   cmd-docker-remove powerstrip
-  DOCKER_HOST="unix:///var/run/docker.real.sock" \
+  DOCKER_HOST="unix:///var/run/docker.sock" \
   docker run --name powerstrip \
     -v /var/run:/host-var-run \
     -v /etc/powerstrip-demo/adapters.yml:/etc/powerstrip/adapters.yml \
@@ -345,7 +343,7 @@ cmd-setup-zfs-agent() {
   cmd-wait-for-file /etc/flocker/volume.json
   cmd-stop-system-service flocker-zfs-agent
 
-  # setup docker on /var/run/docker.real.sock
+  # setup docker on /var/run/docker.sock
   cmd-configure-docker
 }
 
