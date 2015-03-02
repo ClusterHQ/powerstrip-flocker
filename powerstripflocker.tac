@@ -13,5 +13,5 @@ def getAdapter():
 
 application = service.Application("Powerstrip Flocker Adapter")
 
-adapterServer = internet.TCPServer(80, getAdapter(), interface='0.0.0.0')
+adapterServer = internet.TCPServer(9042, getAdapter(), interface='0.0.0.0')
 adapterServer.setServiceParent(application)

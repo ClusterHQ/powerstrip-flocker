@@ -34,9 +34,9 @@ class AdapterResource(resource.Resource):
         Handle a pre-hook: either create a filesystem, or move it in place.
         """
         requestJson = json.loads(request.content.read())
-        if requestJson["Type"] != "pre-hook":
-            raise Exception("unsupported hook type %s" %
-                (requestJson["Type"],))
+        if requestJson["DockerVolumesExtensionVersion"] != 1:
+            raise Exception("unsupported docker volume extension version for request: %s" %
+                (requestJson,))
 
         pprint.pprint(os.environ)
         # BASE_URL like http://control-service/v1/ ^
@@ -98,9 +98,10 @@ class AdapterResource(resource.Resource):
             # iterate over the datasets we were asked to create by the docker client
             fs_create_deferreds = []
             old_binds = []
-            if json_parsed['HostConfig']['Binds'] is not None:
-                for bind in json_parsed['HostConfig']['Binds']:
-                    host_path, remainder = bind.split(":", 1)
+            if json_parsed['HostPath'] is not None and json_parsed['HostPath'] != "":
+                binds = [json_parsed['HostPath']]
+                for bind in binds:
+                    host_path, remainder = bind, ""
                     # TODO validation
                     # if "/" in fs:
                     #    raise Exception("Not allowed flocker filesystems more than one level deep")
@@ -137,17 +138,17 @@ class AdapterResource(resource.Resource):
             def got_created_and_moved_datasets(list_new_datasets):
                 dataset_mapping = dict(list_new_datasets)
                 new_binds = []
-                for fs, reminder in old_binds:
-                    new_binds.append("/flocker/%s.default.%s:%s" %
-                            (self.host_uuid, dataset_mapping[fs], remainder))
-                new_json_parsed = json_parsed.copy()
-                new_json_parsed['HostConfig']['Binds'] = new_binds
-                request.write(json.dumps({
-                    "PowerstripProtocolVersion": 1,
-                    "ModifiedClientRequest": {
-                        "Method": "POST",
-                        "Request": request.uri,
-                        "Body": json.dumps(new_json_parsed)}}))
+                for fs, remainder in old_binds:
+                    # forget about remainder...
+                    new_binds.append("/flocker/%s.default.%s" %
+                            (self.host_uuid, dataset_mapping[fs]))
+                new_json = {"DockerVolumesExtensionVersion": 1}
+                if new_binds:
+                    new_json["ModifiedHostPath"] = new_binds[0]
+                else:
+                    # This is how you indicate not handling this request
+                    new_json["ModifiedHostPath"] = ""
+                request.write(json.dumps(new_json))
                 request.finish()
             d.addCallback(got_created_and_moved_datasets)
             return d
