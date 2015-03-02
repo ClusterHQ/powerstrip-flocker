@@ -45,7 +45,7 @@ cmd-configure-docker() {
   if [[ "$DISTRO" == "redhat" ]]; then
     # docker itself listens on docker.real.sock and powerstrip listens on docker.sock
     cat << EOF > /etc/sysconfig/docker-network
-DOCKER_NETWORK_OPTIONS=-H unix:///var/run/docker.real.sock --dns 8.8.8.8 --dns 8.8.4.4
+DOCKER_NETWORK_OPTIONS=--dns 8.8.8.8 --dns 8.8.4.4 --volume-ext=http://localhost:9042/flocker-adapter
 EOF
 
     # the key here is removing the selinux=yes option from docker
@@ -59,7 +59,7 @@ EOF
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/default/docker
 # Use DOCKER_OPTS to modify the daemon startup options.
-DOCKER_OPTS="-H unix:///var/run/docker.real.sock --dns 8.8.8.8 --dns 8.8.4.4"
+DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4 --volume-ext=http://localhost:9042/flocker-adapter"
 EOF
   fi
   cmd-restart-docker
