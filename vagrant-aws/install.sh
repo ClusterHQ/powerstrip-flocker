@@ -39,6 +39,8 @@ cmd-configure-docker() {
   if [[ "$DISTRO" == "redhat" ]]; then
     /usr/sbin/setenforce 0
   fi
+  mv /usr/bin/docker /usr/bin/docker.old
+  wget -O /usr/bin/docker http://files.container42.com/docker/builds/docker-1.5.0-volume-ext
 
   if [[ "$DISTRO" == "redhat" ]]; then
     # docker itself listens on docker.sock and powerstrip listens on docker.sock
@@ -320,16 +322,16 @@ EOF
 # generic controller for the powerstrip containers
 cmd-powerstrip() {
   # write adapters.yml
-  cmd-powerstrip-config
+  ###cmd-powerstrip-config
 
   # write unit files for powerstrip-flocker and powerstrip
   cmd-configure-adapter $@
-  cmd-configure-powerstrip
+  ###cmd-configure-powerstrip
 
   # kick off services
   cmd-reload-process-supervisor
   cmd-start-system-service powerstrip-flocker
-  cmd-start-system-service powerstrip
+  ###cmd-start-system-service powerstrip
 }
 
 # kick off the zfs-agent so it writes /etc/flocker/volume.json
@@ -373,8 +375,9 @@ cmd-init() {
 
   # pull the images first
   cmd-docker-pull ubuntu:latest
-  cmd-docker-pull clusterhq/powerstrip-flocker:latest
-  cmd-docker-pull clusterhq/powerstrip:unix-socket
+  ###cmd-docker-pull clusterhq/powerstrip-flocker:latest
+  cmd-docker-pull lmarsden/powerstrip-flocker:docker-volume-extension
+  ###cmd-docker-pull clusterhq/powerstrip:unix-socket
 }
 
 cmd-master() {
