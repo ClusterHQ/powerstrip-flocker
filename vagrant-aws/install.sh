@@ -40,8 +40,7 @@ cmd-configure-docker() {
     /usr/sbin/setenforce 0
   fi
   mv /usr/bin/docker /usr/bin/docker.old
-  wget -O /usr/bin/docker http://files.container42.com/docker/builds/docker-1.5.0-volume-ext
-
+  wget -O /usr/bin/docker http://storage.googleapis.com/experiments-clusterhq/docker-volume-extensions/docker
   if [[ "$DISTRO" == "redhat" ]]; then
     # docker itself listens on docker.sock and powerstrip listens on docker.sock
     cat << EOF > /etc/sysconfig/docker-network
