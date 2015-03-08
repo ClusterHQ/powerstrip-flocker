@@ -22,6 +22,8 @@ We need the vagrant AWS plugin to provision machines with AWS - once vagrant is 
 $ vagrant plugin install vagrant-aws
 ```
 
+**NB:** On Ubuntu installing the latest vagrant (1.7.2+) from http://www.vagrantup.com/downloads.html was necessary.
+
 #### Clone repository
 
 Make sure you have checked out this repo and are in the vagrant-aws directory:
