@@ -37,6 +37,8 @@ $ cd powerstrip-flocker/vagrant-aws
 
 Copy `settings.yml.sample` to `settings.yml` and fill in the details.
 
+**NB:** This demo only works in AWS region us-east-1.
+
 #### `vagrant up`
 
 Now we type `vagrant up --provider=aws` which will spin up the two nodes.
