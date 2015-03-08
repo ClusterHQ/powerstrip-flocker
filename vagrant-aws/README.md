@@ -20,6 +20,7 @@ We need the vagrant AWS plugin to provision machines with AWS - once vagrant is 
 
 ```bash
 $ vagrant plugin install vagrant-aws
+$ vagrant box add dummy https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box
 ```
 
 **NB:** On Ubuntu installing the latest vagrant (1.7.2+) from http://www.vagrantup.com/downloads.html was necessary.
