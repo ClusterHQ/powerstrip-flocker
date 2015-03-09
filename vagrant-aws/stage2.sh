@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-good_flocker_version="bcc7bb4280629a67b97da7750ca6e513767aad21"
+good_flocker_version="edf19adc2b620562f75f5c1e065d253344a5152d"
 
 export DEBIAN_FRONTEND=noninteractive
 
