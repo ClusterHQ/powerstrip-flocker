@@ -23,6 +23,13 @@ tar zxfv machinist-0.2.0.tar.gz
 cd machinist-0.2.0
 python setup.py install
 
+# uhhh.. hack
+cd ~/
+wget https://pypi.python.org/packages/source/m/machinist/eliot-0.6.0.tar.gz
+tar zxfv eliot-0.6.0.tar.gz
+cd eliot-0.6.0
+python setup.py install
+
 # now install flocker
 cd /opt/flocker
 python setup.py install
