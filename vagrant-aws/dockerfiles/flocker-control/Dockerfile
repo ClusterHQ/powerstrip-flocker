@@ -33,7 +33,7 @@ RUN         cd ~/ && \
 RUN         apt-get -qy install git
 
 RUN         cd /opt && git clone https://github.com/clusterhq/flocker && \
-            cd flocker && git checkout edf19adc2b620562f75f5c1e065d253344a5152d && \
+            cd flocker && git checkout containerized-handoff && \
             apt-get -y install python-setuptools python-dev
 
 WORKDIR     /opt/flocker
