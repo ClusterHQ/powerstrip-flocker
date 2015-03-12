@@ -11,3 +11,8 @@ elif [[ ! -b /dev/sdb ]]; then
     truncate -s 10G /$zfs_pool_name-datafile
     zpool create $zfs_pool_name /$zfs_pool_name-datafile
 fi
+
+# create and destroy a dataset to exercise zfs automount
+zfs create flocker/ignored
+zfs set mountpoint=/flocker/ignored flocker/ignored
+zfs destroy flocker/ignored
