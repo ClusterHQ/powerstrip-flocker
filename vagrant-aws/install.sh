@@ -1,12 +1,13 @@
 #!/bin/bash
 
 export FLOCKER_CONTROL_PORT=${FLOCKER_CONTROL_PORT:=80}
+export FLOCKER_AGENT_PORT=${FLOCKER_AGENT_PORT:=4524}
 
 # supported distributions: "ubuntu", "redhat" (means centos/fedora)
 export DISTRO=${DISTRO:="ubuntu"}
 
-export FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
-export FLOCKER_CONTROL=`which flocker-control`
+export FLOCKER_ZFS_AGENT=flocker-zfs-agent
+export FLOCKER_CONTROL=flocker-control
 export DOCKER=`which docker`
 export BASH=`which bash`
 
@@ -63,7 +64,7 @@ DOCKER_OPTS="-H unix:///var/run/docker.real.sock --dns 8.8.8.8 --dns 8.8.4.4"
 EOF
   fi
   cmd-restart-docker
-  rm -f /var/run/docker.sock
+  rm -rf /var/run/docker.sock
 }
 
 cmd-enable-system-service() {
@@ -132,6 +133,7 @@ cmd-docker-pull() {
 
 # configure powerstrip-flocker adapter
 cmd-configure-adapter() {
+  cmd-fetch-config-from-disk-if-present $@
   local cmd="/srv/vagrant/install.sh start-adapter $IP $CONTROLIP"
   local service="powerstrip-flocker"
 
@@ -170,7 +172,7 @@ cmd-start-adapter() {
   cmd-docker-remove powerstrip-flocker
   local HOSTID=$(cmd-get-flocker-uuid)
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
-  docker run --name powerstrip-flocker \
+  docker run --rm --name powerstrip-flocker \
     --expose 80 \
     -e "MY_NETWORK_IDENTITY=$IP" \
     -e "FLOCKER_CONTROL_SERVICE_BASE_URL=http://$CONTROLIP:80/v1" \
@@ -212,10 +214,10 @@ EOF
 # the boot step for the powerstrip container - start without -d so process
 # manager can manage the process
 cmd-start-powerstrip() {
-  rm -f /var/run/docker.sock
+  rm -rf /var/run/docker.sock
   cmd-docker-remove powerstrip
   DOCKER_HOST="unix:///var/run/docker.real.sock" \
-  docker run --name powerstrip \
+  docker run --rm --name powerstrip \
     -v /var/run:/host-var-run \
     -v /etc/powerstrip-demo/adapters.yml:/etc/powerstrip/adapters.yml \
     --link powerstrip-flocker:flocker \
@@ -288,13 +290,25 @@ cmd-block-start-flocker-zfs-agent() {
         && sleep 1 && docker info && sleep 1 && docker info \
         && sleep 1 && docker info); do echo "waiting for /var/run/docker.sock"; sleep 1; done;
   # TODO maaaaybe check for powerstrip container running here?
-  $FLOCKER_ZFS_AGENT $IP $CONTROLIP
+  mkdir -p /etc/flocker
+  DOCKER_HOST="unix:///var/run/docker.real.sock" \
+  docker rm -f flocker-zfs-agent
+  DOCKER_HOST="unix:///var/run/docker.real.sock" \
+  docker run --rm --name flocker-zfs-agent --privileged -v /etc/flocker:/etc/flocker \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      -v /dev/zfs:/dev/zfs -v /flocker:/flocker \
+      lmarsden/flocker-zfs-agent $FLOCKER_ZFS_AGENT $IP $CONTROLIP
 }
 
 
 # configure control service with process manager
 cmd-flocker-control() {
-  local cmd="$FLOCKER_CONTROL -p $FLOCKER_CONTROL_PORT"
+  local env="DOCKER_HOST=unix:///var/run/docker.real.sock"
+  local cmd="docker rm -f flocker-control; docker run --rm --name flocker-control \
+            -p $FLOCKER_CONTROL_PORT:$FLOCKER_CONTROL_PORT \
+            -p $FLOCKER_AGENT_PORT:$FLOCKER_AGENT_PORT \
+            lmarsden/flocker-control \
+            $FLOCKER_CONTROL -p $FLOCKER_CONTROL_PORT"
   local service="flocker-control"
 
   echo "configure $service"
@@ -306,7 +320,8 @@ Description=Flocker Control Service
 
 [Service]
 TimeoutStartSec=0
-ExecStart=$cmd
+Environment="$env"
+ExecStart=sh -c "$cmd"
 
 [Install]
 WantedBy=multi-user.target
@@ -315,7 +330,8 @@ EOF
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/supervisor/conf.d/$service.conf
 [program:$service]
-command=$cmd
+environment=$env
+command=sh -c "$cmd"
 EOF
   fi
 
@@ -374,7 +390,7 @@ cmd-init() {
   cmd-copy-vagrant-dir
   # if we're not being passed IP addresses as arguments, see if we can fetch
   # them from disk
-  cmd-fetch-config-from-disk-if-present
+  cmd-fetch-config-from-disk-if-present $@
 
   # pull the images first
   cmd-docker-pull ubuntu:latest
