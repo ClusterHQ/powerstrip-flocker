@@ -11,8 +11,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     aws.secret_access_key = settings["aws_secret_access_key"]
     aws.keypair_name = settings["aws_keypair_name"]
 
-    #aws.ami = "ami-32015d5a" # flocker-only base
-    aws.ami = "ami-3cf8b154" # ubuntu 14.04
+    aws.ami = "ami-f463429c" # containerized
+    #aws.ami = "ami-3cf8b154" # ubuntu 14.04
     #aws.instance_type = "m3.large"
     aws.instance_type = "c3.xlarge"
 
