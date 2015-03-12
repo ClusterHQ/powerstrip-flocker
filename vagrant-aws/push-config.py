@@ -35,7 +35,7 @@ utils.runSSHRaw(minionExternal, 'sudo /vagrant/keygen.sh')
 
 masterPubkey = utils.runSSH(masterExternal,
         ["sudo", "cat", "/root/.ssh/id_rsa.pub"]).strip()
-minionPubkey = utils.runSSH(masterExternal,
+minionPubkey = utils.runSSH(minionExternal,
         ["sudo", "cat", "/root/.ssh/id_rsa.pub"]).strip()
 
 # Make root on the hosts trust eachother
