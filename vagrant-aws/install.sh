@@ -128,7 +128,7 @@ cmd-docker-remove() {
 # gets reconfigured
 cmd-docker-pull() {
   echo "pull image $1";
-  $DOCKER pull $1
+  DOCKER_HOST="unix:///var/run/docker.real.sock" $DOCKER pull $1
 }
 
 # configure powerstrip-flocker adapter
@@ -230,7 +230,7 @@ cmd-start-powerstrip() {
       chgrp vagrant /var/run/docker.sock
   fi
   if [[ "$DISTRO" == "ubuntu" ]]; then
-      chgrp ubuntu /var/run/docker.sock
+      chgrp docker /var/run/docker.sock
   fi
 }
 
@@ -284,16 +284,14 @@ cmd-block-start-flocker-zfs-agent() {
   # we're called from the outside, so figure out network identity etc
   cmd-fetch-config-from-disk-if-present $@
   echo "waiting for docker socket before starting flocker-zfs-agent";
-
+  export DOCKER_HOST="unix:///var/run/docker.real.sock"
   while ! (docker info \
         && sleep 1 && docker info && sleep 1 && docker info \
         && sleep 1 && docker info && sleep 1 && docker info \
         && sleep 1 && docker info); do echo "waiting for /var/run/docker.sock"; sleep 1; done;
   # TODO maaaaybe check for powerstrip container running here?
   mkdir -p /etc/flocker
-  DOCKER_HOST="unix:///var/run/docker.real.sock" \
   docker rm -f flocker-zfs-agent
-  DOCKER_HOST="unix:///var/run/docker.real.sock" \
   docker run --rm --name flocker-zfs-agent --privileged \
       -v /etc/flocker:/etc/flocker \
       -v /var/run/docker.real.sock:/var/run/docker.sock \
@@ -366,9 +364,6 @@ cmd-setup-zfs-agent() {
   cmd-start-system-service flocker-zfs-agent
   cmd-wait-for-file /etc/flocker/volume.json
   cmd-stop-system-service flocker-zfs-agent
-
-  # setup docker on /var/run/docker.real.sock
-  cmd-configure-docker
 }
 
 cmd-fetch-config-from-disk-if-present() {
@@ -389,6 +384,9 @@ cmd-fetch-config-from-disk-if-present() {
 }
 
 cmd-init() {
+  # setup docker on /var/run/docker.real.sock
+  cmd-configure-docker
+
   # make vagrant directory persistent
   cmd-copy-vagrant-dir
   # if we're not being passed IP addresses as arguments, see if we can fetch
