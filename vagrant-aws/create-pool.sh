@@ -13,4 +13,5 @@ elif [[ ! -b /dev/sdb ]]; then
 fi
 
 # create a dataset to exercise zfs automount and leave it open
+zfs create flocker/ignored
 zfs set readonly=off flocker
