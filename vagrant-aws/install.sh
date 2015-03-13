@@ -397,6 +397,8 @@ cmd-init() {
   cmd-docker-pull ubuntu:latest
   cmd-docker-pull clusterhq/powerstrip-flocker:latest
   cmd-docker-pull clusterhq/powerstrip:unix-socket
+  cmd-docker-pull lmarsden/flocker-zfs-agent
+  cmd-docker-pull lmarsden/flocker-control
 }
 
 cmd-master() {
