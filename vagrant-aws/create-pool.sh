@@ -12,7 +12,5 @@ elif [[ ! -b /dev/sdb ]]; then
     zpool create $zfs_pool_name /$zfs_pool_name-datafile
 fi
 
-# create and destroy a dataset to exercise zfs automount
+# create a dataset to exercise zfs automount and leave it open
 zfs create flocker/ignored
-zfs set mountpoint=/flocker/ignored flocker/ignored
-zfs destroy flocker/ignored
