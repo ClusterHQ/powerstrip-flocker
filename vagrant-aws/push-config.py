@@ -20,14 +20,6 @@ masterExternal, masterInternal = instances[0]
 minionExternal, minionInternal = instances[1]
 utils.pushConfig(masterExternal, instances)
 
-# install powerstrip, powerstrip-flocker, and configure both nodes to start
-# flocker-control and flocker-zfs service.
-print "Setting up powerstrip, powerstrip-flocker & flocker."
-
-utils.runSSHPassthru(masterExternal, ["sudo", "/vagrant/install.sh", "master"])
-utils.runSSHPassthru(minionExternal, ["sudo", "/vagrant/install.sh", "minion"])
-
-print "Finished setting up powerstrip, powerstrip-flocker & flocker!"
 print "Now configuring SSH keys on hosts..."
 
 utils.runSSHRaw(masterExternal, 'sudo /vagrant/keygen.sh')
@@ -55,5 +47,14 @@ print "Setting up firewall to only allow the minions to connect to the master co
 
 utils.runSSH(masterExternal, ["sudo", "/vagrant/iptables.sh"])
 utils.runSSH(minionExternal, ["sudo", "/vagrant/iptables.sh"])
+
+# install powerstrip, powerstrip-flocker, and configure both nodes to start
+# flocker-control and flocker-zfs service.
+print "Setting up powerstrip, powerstrip-flocker & flocker."
+
+utils.runSSHPassthru(masterExternal, ["sudo", "/vagrant/install.sh", "master"])
+utils.runSSHPassthru(minionExternal, ["sudo", "/vagrant/install.sh", "minion"])
+
+print "Finished setting up powerstrip, powerstrip-flocker & flocker!"
 
 print "Done! You can now play with docker + powerstrip + flocker on your hosts :)"
