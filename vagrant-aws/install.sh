@@ -295,8 +295,6 @@ cmd-block-start-flocker-zfs-agent() {
   docker run --rm --name flocker-zfs-agent --privileged \
       -v /etc/flocker:/etc/flocker \
       -v /var/run/docker.real.sock:/var/run/docker.sock \
-      -v /dev/zfs:/dev/zfs \
-      -v /flocker:/flocker \
       -v /root/.ssh:/root/.ssh \
       lmarsden/flocker-zfs-agent $FLOCKER_ZFS_AGENT $IP $CONTROLIP
 }
