@@ -32,28 +32,6 @@ RUN         cd ~/ && \
 
 RUN         apt-get -qy install git
 
-RUN         apt-get -y install build-essential gawk alien fakeroot linux-headers-$(uname -r) zlib1g-dev uuid-dev libblkid-dev libselinux-dev parted lsscsi dh-autoreconf git
-
-RUN         cd ~/ && \
-            git clone https://github.com/zfsonlinux/spl && \
-            cd spl && \
-            git checkout 47af4b76ffe72457166e4abfcfe23848ac51811a && \
-            ./autogen.sh && \
-            ./configure && \
-            make && \
-            make deb && \
-            sudo dpkg -i *.deb
-
-RUN         cd ~/ && \
-            git clone https://github.com/zfsonlinux/zfs && \
-            cd zfs && \
-            git checkout d958324f97f4668a2a6e4a6ce3e5ca09b71b31d9 && \
-            ./autogen.sh && \
-            ./configure && \
-            make && \
-            make deb && \
-            sudo dpkg -i *.deb
-
 # Replace iptables with... nothing.
 RUN         ln -s /bin/true /usr/bin/iptables
 RUN         ln -s /bin/true /usr/bin/iptables-save
@@ -61,7 +39,7 @@ RUN         ln -s /bin/true /usr/bin/iptables-save
 # Alternative (because privileged)...
 #RUN         apt-get -y iptables
 
-ENV         updated_flocker 2015-03-13e
+ENV         updated_flocker 2015-03-14
 RUN         cd /opt && git clone https://github.com/clusterhq/flocker && \
             cd flocker && git checkout containerized-handoff && \
             apt-get -y install python-setuptools python-dev
