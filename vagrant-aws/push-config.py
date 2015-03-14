@@ -38,13 +38,18 @@ masterPubkey = utils.runSSH(masterExternal,
 minionPubkey = utils.runSSH(minionExternal,
         ["sudo", "cat", "/root/.ssh/id_rsa.pub"]).strip()
 
-# Make root on the hosts trust eachother
-utils.runSSH(masterExternal, ["sudo", "bash", "-c",
-        "'echo %s >> /root/.ssh/authorized_keys'" % (minionPubkey,)])
-utils.runSSH(minionExternal, ["sudo", "bash", "-c",
-        "'echo %s >> /root/.ssh/authorized_keys'" % (masterPubkey,)])
-print "Setting up firewall to only allow the minions to connect to the master control service..."
+for (truster, trustee) in [
+        # Make root on the hosts trust eachother.
+        (masterExternal, minionPubkey),
+        (minionExternal, masterPubkey),
+        # Allow nodes to log into *themselves* to escape MNT namespace.
+        (masterExternal, masterPubkey),
+        (minionExternal, minionPubkey),
+        ]:
+    utils.runSSH(truster, ["sudo", "bash", "-c",
+            "'echo %s >> /root/.ssh/authorized_keys'" % (trustee,)])
 
+print "Setting up firewall to only allow the minions to connect to the master control service..."
 #utils.scp("iptables.sh", masterExternal, "/vagrant/iptables.sh")
 #utils.scp("iptables.sh", minionExternal, "/vagrant/iptables.sh")
 
