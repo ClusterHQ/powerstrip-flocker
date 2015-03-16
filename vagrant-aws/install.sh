@@ -292,7 +292,7 @@ cmd-block-start-flocker-zfs-agent() {
   # TODO maaaaybe check for powerstrip container running here?
   mkdir -p /etc/flocker
   docker rm -f flocker-zfs-agent
-  docker run --rm --name flocker-zfs-agent --privileged \
+  docker run --rm --name flocker-zfs-agent \
       -v /etc/flocker:/etc/flocker \
       -v /var/run/docker.real.sock:/var/run/docker.sock \
       -v /root/.ssh:/root/.ssh \
