@@ -34,3 +34,24 @@ See README.md in this directory instead.
 # at vagrant provisioning time
 
 * Need to create the zpool.
+
+
+# testing notes
+
+node1:
+```
+sudo docker logs -f flocker-zfs-agent | grep -v fsm_ &
+sudo docker run -v /flocker/demo:/data busybox sh -c "echo fish > /data/file"
+```
+
+node2:
+```
+sudo docker logs -f flocker-zfs-agent | grep -v fsm_ &
+sudo docker run -v /flocker/demo:/data busybox sh -c "cat /data/file"
+```
+
+reload:
+```
+sudo docker pull lmarsden/flocker-zfs-agent
+sudo docker rm -f flocker-zfs-agent
+```
