@@ -6,19 +6,19 @@ import os
 config = yaml.load(open("settings.yml"))
 
 def runSSH(ip, command):
-    command = 'ssh -i %s %s@%s %s' % (config["private_key_path"],
+    command = 'ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i %s %s@%s %s' % (config["private_key_path"],
             config["remote_server_username"],
             ip, " ".join(map(quote, command)))
     return subprocess.check_output(command, shell=True)
 
 def runSSHRaw(ip, command):
-    command = 'ssh -i %s %s@%s %s' % (config["private_key_path"],
+    command = 'ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i %s %s@%s %s' % (config["private_key_path"],
             config["remote_server_username"],
             ip, command)
     return subprocess.check_output(command, shell=True)
 
 def runSSHPassthru(ip, command):
-    command = 'ssh -i %s %s@%s %s' % (config["private_key_path"],
+    command = 'ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i %s %s@%s %s' % (config["private_key_path"],
             config["remote_server_username"],
             ip, " ".join(map(quote, command)))
     return os.system(command)
@@ -53,7 +53,7 @@ def pushConfig(text, instances):
 def scp(local_path, external_ip, remote_path,
         private_key_path=config["private_key_path"],
         remote_server_username=config["remote_server_username"]):
-    scp = ("scp -i %(private_key_path)s %(local_path)s "
+    scp = ("scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i %(private_key_path)s %(local_path)s "
            "%(remote_server_username)s@%(external_ip)s:%(remote_path)s") % dict(
                 private_key_path=config["private_key_path"],
                 remote_server_username=config["remote_server_username"],
