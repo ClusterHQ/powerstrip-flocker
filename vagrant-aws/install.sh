@@ -58,6 +58,7 @@ EOF
   fi
 
   if [[ "$DISTRO" == "ubuntu" ]]; then
+    export DEBIAN_FRONTEND=noninteractive
     apt-get -y install linux-image-extra-$(uname -r) # for aufs
     cat << EOF > /etc/default/docker
 # Use DOCKER_OPTS to modify the daemon startup options.
