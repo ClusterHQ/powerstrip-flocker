@@ -18,6 +18,21 @@ from twisted.web.client import Agent
 from treq.client import HTTPClient
 import treq
 
+class HandshakeResource(resource.Resource):
+    """
+    A powerstrip pre-hook for container create.
+    """
+    isLeaf = True
+
+    def render_POST(self, request):
+        return json.dumps(dict(
+             InterestedIn=["volume"],
+             Name="flocker",
+             Author="Luke Marsden <luke@clusterhq.com>",
+             Org="ClusterHQ, Inc.",
+             Website="https://github.com/clusterhq/powerstrip-flocker/",
+        ))
+
 class AdapterResource(resource.Resource):
     """
     A powerstrip pre-hook for container create.

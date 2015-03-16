@@ -7,7 +7,16 @@ from powerstripflocker.adapter import AdapterResource
 
 def getAdapter():
     root = resource.Resource()
-    root.putChild("flocker-adapter", AdapterResource())
+
+    v1 = resource.Resource()
+    root.putChild("v1", v1)
+
+    volume = resource.Resource()
+    v1.putChild("volume", volume)
+    volume.putChild("volumes", AdapterResource())
+
+    v1.putChild("handshake", HandshakeResource())
+
     site = server.Site(root)
     return site
 
