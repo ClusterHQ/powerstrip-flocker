@@ -58,6 +58,7 @@ EOF
   fi
 
   if [[ "$DISTRO" == "ubuntu" ]]; then
+    apt-get -y install linux-image-extra-$(uname -r) # for aufs
     cat << EOF > /etc/default/docker
 # Use DOCKER_OPTS to modify the daemon startup options.
 DOCKER_OPTS="-H unix:///var/run/docker.real.sock --dns 8.8.8.8 --dns 8.8.4.4 -s aufs"
