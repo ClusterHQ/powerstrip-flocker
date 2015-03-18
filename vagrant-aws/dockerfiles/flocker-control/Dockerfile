@@ -34,7 +34,7 @@ RUN         apt-get -qy install git
 
 ENV         updated_flocker 2015-03-14
 RUN         cd /opt && git clone https://github.com/clusterhq/flocker && \
-            cd flocker && git checkout containerized-handoff && \
+            cd flocker && git checkout containerized-handoff-coreos && \
             apt-get -y install python-setuptools python-dev
 
 WORKDIR     /opt/flocker
