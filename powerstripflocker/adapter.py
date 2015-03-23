@@ -108,6 +108,7 @@ class AdapterResource(resource.Resource):
             # iterate over the datasets we were asked to create by the docker client
             fs_create_deferreds = []
             old_binds = []
+            print "got json_parsed...", json_parsed
             if json_parsed['HostPath'] is not None and json_parsed['HostPath'] != "":
                 binds = [json_parsed['HostPath']]
                 for bind in binds:
