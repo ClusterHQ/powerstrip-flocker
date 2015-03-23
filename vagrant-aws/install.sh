@@ -40,13 +40,13 @@ cmd-configure-docker() {
     /usr/sbin/setenforce 0
   fi
   mv /usr/bin/docker /usr/bin/docker.old
-  #wget -O /usr/bin/docker http://storage.googleapis.com/experiments-clusterhq/docker-volume-extensions/docker
+  #wget -O /usr/bin/docker http://storage.googleapis.com/experiments-clusterhq/docker-plugin-mode/docker
   # latest version of this file from brian (which does new style extension handshake)...
-  wget -O /usr/bin/docker https://s3.amazonaws.com/files.container42.com/docker-1.5.0-dev
+  wget -O /usr/bin/docker https://github.com/milosgajdos83/docker/releases/download/muhehe/docker-1.5.0-dev
   if [[ "$DISTRO" == "redhat" ]]; then
     # docker itself listens on docker.sock and powerstrip listens on docker.sock
     cat << EOF > /etc/sysconfig/docker-network
-DOCKER_NETWORK_OPTIONS=--dns 8.8.8.8 --dns 8.8.4.4 --volume-ext=http://localhost:9042/flocker-adapter
+DOCKER_NETWORK_OPTIONS=--dns 8.8.8.8 --dns 8.8.4.4
 EOF
 
     # the key here is removing the selinux=yes option from docker
@@ -60,7 +60,7 @@ EOF
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/default/docker
 # Use DOCKER_OPTS to modify the daemon startup options.
-DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4 --volume-ext=http://localhost:9042/flocker-adapter"
+DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4
 EOF
   fi
   cmd-restart-docker
@@ -176,7 +176,7 @@ cmd-start-adapter() {
     -e "MY_NETWORK_IDENTITY=$IP" \
     -e "FLOCKER_CONTROL_SERVICE_BASE_URL=http://$CONTROLIP:80/v1" \
     -e "MY_HOST_UUID=$HOSTID" \
-    lmarsden/powerstrip-flocker:docker-volume-extension
+    lmarsden/powerstrip-flocker:docker-plugin-mode
 }
 
 cmd-configure-powerstrip() {
@@ -377,7 +377,7 @@ cmd-init() {
   # pull the images first
   cmd-docker-pull ubuntu:latest
   ###cmd-docker-pull clusterhq/powerstrip-flocker:latest
-  cmd-docker-pull lmarsden/powerstrip-flocker:docker-volume-extension
+  cmd-docker-pull lmarsden/powerstrip-flocker:docker-plugin-mode
   ###cmd-docker-pull clusterhq/powerstrip:unix-socket
 }
 
