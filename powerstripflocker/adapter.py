@@ -50,10 +50,6 @@ class AdapterResource(resource.Resource):
         """
         json_parsed = json.loads(request.content.read())
         print ">>> called with", json_parsed
-        if json_parsed["DockerVolumesExtensionVersion"] != 1:
-            raise Exception("unsupported docker volume extension version for request: %s" %
-                (json_parsed,))
-
         pprint.pprint(os.environ)
         # BASE_URL like http://control-service/v1/ ^
 
@@ -156,7 +152,7 @@ class AdapterResource(resource.Resource):
                     # forget about remainder...
                     new_binds.append("/flocker/%s.default.%s" %
                             (self.host_uuid, dataset_mapping[fs]))
-                new_json = {"DockerVolumesExtensionVersion": 1}
+                new_json = {}
                 if new_binds:
                     new_json["ModifiedHostPath"] = new_binds[0]
                 else:
