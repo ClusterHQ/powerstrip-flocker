@@ -43,6 +43,7 @@ cmd-configure-docker() {
   #wget -O /usr/bin/docker http://storage.googleapis.com/experiments-clusterhq/docker-plugin-mode/docker
   # latest version of this file from brian (which does new style extension handshake)...
   wget -O /usr/bin/docker https://github.com/milosgajdos83/docker/releases/download/muhehe/docker-1.5.0-dev
+  chmod +x /usr/bin/docker
   if [[ "$DISTRO" == "redhat" ]]; then
     # docker itself listens on docker.sock and powerstrip listens on docker.sock
     cat << EOF > /etc/sysconfig/docker-network
