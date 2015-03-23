@@ -61,7 +61,7 @@ EOF
   if [[ "$DISTRO" == "ubuntu" ]]; then
     cat << EOF > /etc/default/docker
 # Use DOCKER_OPTS to modify the daemon startup options.
-DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4
+DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4"
 EOF
   fi
   cmd-restart-docker
