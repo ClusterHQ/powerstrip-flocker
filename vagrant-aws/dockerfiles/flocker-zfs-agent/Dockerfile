@@ -39,7 +39,7 @@ RUN         ln -s /bin/true /usr/bin/iptables-save
 # Alternative (because privileged)...
 #RUN         apt-get -y iptables
 
-ENV         updated_flocker 2015-03-14
+ENV         updated_flocker 2015-03-28
 RUN         cd /opt && git clone https://github.com/clusterhq/flocker && \
             cd flocker && git checkout containerized-handoff-coreos && \
             apt-get -y install python-setuptools python-dev

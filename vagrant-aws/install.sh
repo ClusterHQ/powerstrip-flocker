@@ -3,8 +3,8 @@
 export FLOCKER_CONTROL_PORT=${FLOCKER_CONTROL_PORT:=80}
 export FLOCKER_AGENT_PORT=${FLOCKER_AGENT_PORT:=4524}
 
-# supported distributions: "ubuntu", "redhat" (means centos/fedora)
-export DISTRO=${DISTRO:="ubuntu"}
+# supported distributions: "ubuntu", "redhat" (means centos/fedora), "coreos"
+export DISTRO=${DISTRO:="coreos"}
 
 export FLOCKER_ZFS_AGENT=flocker-zfs-agent
 export FLOCKER_CONTROL=flocker-control
