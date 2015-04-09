@@ -113,6 +113,7 @@ class AdapterResource(resource.Resource):
             normal_binds = []
             final_binds = []
             binds = getBinds(json_parsed)
+            pprint.pprint(binds)
             if binds is not None:
                 for bind in binds:
                     host_path, remainder = bind.split(":", 1)
@@ -155,10 +156,16 @@ class AdapterResource(resource.Resource):
             def got_created_and_moved_datasets(list_new_datasets):
                 dataset_mapping = dict(list_new_datasets)
                 new_binds = []
-                for fs, reminder in old_binds:
+                print "old binds"
+                pprint.pprint(old_binds)
+                for fs, remainder in old_binds:
                     new_binds.append("/flocker/%s.default.%s:%s" %
                             (self.host_uuid, dataset_mapping[fs], remainder))
                 final_binds = new_binds + normal_binds
+                print "normal binds"
+                pprint.pprint(normal_binds)
+                print "final binds"
+                pprint.pprint(final_binds)
                 new_json_parsed = setBinds(json_parsed.copy(), final_binds)
                 request.write(json.dumps({
                     "PowerstripProtocolVersion": 1,
