@@ -16,3 +16,5 @@ settings.yml
 vagrant-aws/master_address
 vagrant-aws/minions
 vagrant-aws/my_address
+Powerstrip_Flocker_Adapter.egg-info
+dist
