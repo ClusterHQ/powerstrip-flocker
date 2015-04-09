@@ -98,8 +98,11 @@ class AdapterResource(resource.Resource):
             # iterate over the datasets we were asked to create by the docker client
             fs_create_deferreds = []
             old_binds = []
-            if json_parsed['HostConfig']['Binds'] is not None:
-                for bind in json_parsed['HostConfig']['Binds']:
+            normal_binds = []
+            final_binds = []
+            binds = getBinds(json_parsed)
+            if binds is not None:
+                for bind in binds:
                     host_path, remainder = bind.split(":", 1)
                     # TODO validation
                     # if "/" in fs:
@@ -132,6 +135,9 @@ class AdapterResource(resource.Resource):
                             d.addCallback(treq.json_content)
                             d.addCallback(wait_until_volume_in_place, fs=fs)
                             fs_create_deferreds.append(d)
+                    # we want to hold on to any non-flocker binds
+                    else:
+                        normal_binds.append(bind) 
 
             d = defer.gatherResults(fs_create_deferreds)
             def got_created_and_moved_datasets(list_new_datasets):
@@ -140,8 +146,8 @@ class AdapterResource(resource.Resource):
                 for fs, reminder in old_binds:
                     new_binds.append("/flocker/%s.default.%s:%s" %
                             (self.host_uuid, dataset_mapping[fs], remainder))
-                new_json_parsed = json_parsed.copy()
-                new_json_parsed['HostConfig']['Binds'] = new_binds
+                final_binds = new_binds + normal_binds
+                new_json_parsed = setBinds(json_parsed.copy(), final_binds)
                 request.write(json.dumps({
                     "PowerstripProtocolVersion": 1,
                     "ModifiedClientRequest": {
@@ -179,3 +185,29 @@ def loop_until(predicate):
         return result
     d.addCallback(loop)
     return d
+
+def getBinds(jsonBody):
+    """
+    Given a JSON packet from either a /containers/create or /containers/start request - 
+    return the array of volume descriptors
+    The formatting is different for each type of request - this abstracts away the differences
+    """
+
+    if "Binds" in jsonBody:
+        return jsonBody['Binds']
+    if "HostConfig" in jsonBody:
+        if "Binds" in jsonBody['HostConfig']:
+            return jsonBody['HostConfig']['Binds']
+    return None
+
+def setBinds(jsonBody, binds):
+    """
+    Given a JSON packet from either a /containers/create or /containers/start request - 
+    inject the given array of volumes back into its respective location
+    """
+    if "Binds" in jsonBody:
+        jsonBody['Binds'] = binds
+    if "HostConfig" in jsonBody:
+        if "Binds" in jsonBody['HostConfig']:
+            jsonBody['HostConfig']['Binds'] = binds
+   return jsonBody
