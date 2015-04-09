@@ -192,7 +192,6 @@ def getBinds(jsonBody):
     return the array of volume descriptors
     The formatting is different for each type of request - this abstracts away the differences
     """
-
     if "Binds" in jsonBody:
         return jsonBody['Binds']
     if "HostConfig" in jsonBody:
@@ -210,4 +209,4 @@ def setBinds(jsonBody, binds):
     if "HostConfig" in jsonBody:
         if "Binds" in jsonBody['HostConfig']:
             jsonBody['HostConfig']['Binds'] = binds
-   return jsonBody
+    return jsonBody
