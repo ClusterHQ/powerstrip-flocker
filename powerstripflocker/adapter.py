@@ -41,7 +41,19 @@ class AdapterResource(resource.Resource):
         pprint.pprint(os.environ)
         # BASE_URL like http://control-service/v1/ ^
         json_payload = requestJson["ClientRequest"]["Body"]
-        json_parsed = json.loads(json_payload)
+
+        # we are dealing with /start requests that might have no JSON body
+        if json_payload is None:
+            request.write(json.dumps({
+                "PowerstripProtocolVersion": 1,
+                "ModifiedClientRequest": {
+                    "Method": "POST",
+                    "Request": request.uri,
+                    "Body": None}}))
+            request.finish()
+            json_parsed = {}
+        else:
+            json_parsed = json.loads(json_payload)
 
         self.base_url = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
         self.ip = os.environ.get("MY_NETWORK_IDENTITY")
