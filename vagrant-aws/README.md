@@ -7,7 +7,7 @@ This demo will guide you through the steps needed to run a multi-node powerstrip
 Ensure that you have the following installed on your system:
 
  * [vagrant](http://www.vagrantup.com/downloads.html) **1.7.2 or later** (e.g. download from the website, don't use Ubuntu package repo)
- * [python](https://www.python.org/downloados/)
+ * [python](https://www.python.org/downloados/) 2.7
 
 Also you need the `yaml` python module installed on your machine - you may wish to run `sudo pip install pyyaml`
 
