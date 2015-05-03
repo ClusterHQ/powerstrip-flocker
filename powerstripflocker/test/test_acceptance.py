@@ -4,10 +4,9 @@
 Acceptance tests for flocker-plugin which can be run against the same
 acceptance testing infrastructure (Vagrant, etc) as Flocker itself.
 
-Eventually flocker-plugin should have unit tests, but starting with
-integration tests is a reasonable first pass, since unit tests depend on having
-a big stack of (ideally verified) fakes for Docker, powerstrip, flocker API
-etc.
+Eventually flocker-plugin should have unit tests, but starting with integration
+tests is a reasonable first pass, since unit tests depend on having a big stack
+of (ideally verified) fakes for Docker, flocker API etc.
 
 Run these tests first time with:
 
@@ -78,8 +77,7 @@ class PowerstripFlockerTests(TestCase):
         powerstrip with flocker-plugin enabled.
 
         * Log into each node in turn:
-          * Run flocker-plugin in docker
-          * Run powerstrip in docker
+          * Load flocker-plugin into docker
         """
         self.agent = Agent(reactor) # no connectionpool
         self.client = HTTPClient(self.agent)
