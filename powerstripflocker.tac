@@ -1,9 +1,10 @@
-# Copyright ClusterHQ Limited. See LICENSE file for details.
+# Copyright ClusterHQ Inc. See LICENSE file for details.
 
 from twisted.web import server, resource
 from twisted.application import service, internet
 
-from powerstripflocker.adapter import AdapterResource, HandshakeResource
+from powerstripflocker.adapter import (HandshakeResource, CreateResource,
+    DestroyResource, MountResource, UnmountResource)
 
 def getHandshakeServer():
     root = resource.Resource()
