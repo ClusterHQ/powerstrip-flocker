@@ -1,10 +1,10 @@
 # Copyright ClusterHQ Inc. See LICENSE file for details.
 
 """
-Acceptance tests for powerstrip-flocker which can be run against the same
+Acceptance tests for flocker-plugin which can be run against the same
 acceptance testing infrastructure (Vagrant, etc) as Flocker itself.
 
-Eventually powerstrip-flocker should have unit tests, but starting with
+Eventually flocker-plugin should have unit tests, but starting with
 integration tests is a reasonable first pass, since unit tests depend on having
 a big stack of (ideally verified) fakes for Docker, powerstrip, flocker API
 etc.
@@ -17,12 +17,12 @@ $ admin/run-powerstrip-acceptance-tests \
       --keep --distribution=fedora-20 powerstripflocker.test.test_acceptance
 
 After that, you can do quick test runs with the following.
-If you haven't changed the server-side component of powerstrip-flocker (ie, if
+If you haven't changed the server-side component of flocker-plugin (ie, if
 you've only changed the acceptance test):
 
 $ ./quick.sh --no-build
 
-If you have changed powerstrip-flocker itself (and not just the acceptance
+If you have changed flocker-plugin itself (and not just the acceptance
 test):
 
 $ ./quick.sh
@@ -54,31 +54,31 @@ from os import kill
 
 from characteristic import attributes
 
-# This refers to where to fetch the latest version of powerstrip-flocker from.
+# This refers to where to fetch the latest version of flocker-plugin from.
 # If you want faster development cycle than Docker automated builds allow you
 # can change it from "clusterhq" to your personal repo, and create a repo on
-# Docker hub called "powerstrip-flocker". Then modify $DOCKER_PULL_REPO in
+# Docker hub called "flocker-plugin". Then modify $DOCKER_PULL_REPO in
 # quick.sh accordingly and use that script.
 DOCKER_PULL_REPO = "lmarsden"
 PF_VERSION = "volume-plugin"
 
 class PowerstripFlockerTests(TestCase):
     """
-    Real powerstrip-flocker tests against two nodes using the flocker
+    Real flocker-plugin tests against two nodes using the flocker
     acceptance testing framework.
     """
 
     # Slow builds because initial runs involve pulling some docker images
-    # (powerstrip, and powerstrip-flocker).
+    # (powerstrip, and flocker-plugin).
     timeout = 1200
 
     def setUp(self):
         """
         Ready the environment for tests which actually run docker against
-        powerstrip with powerstrip-flocker enabled.
+        powerstrip with flocker-plugin enabled.
 
         * Log into each node in turn:
-          * Run powerstrip-flocker in docker
+          * Run flocker-plugin in docker
           * Run powerstrip in docker
         """
         self.agent = Agent(reactor) # no connectionpool
@@ -93,54 +93,31 @@ class PowerstripFlockerTests(TestCase):
             for ip in self.ips:
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
-                for proc in ("powerstrip", "powerstrip-flocker"):
+                for proc in ("flocker-plugin",):
                     try:
                         run(ip, ["docker", "rm", "-f", proc])
                     except Exception:
                         print proc, "was not running, not killed, OK."
-                # put a powerstrip config in place
-                run(ip, ["mkdir", "-p", "/root/powerstrip-config"])
-                run(ip, ["sh", "-c", "cat > /root/powerstrip-config/adapters.yml"], """
-version: 1
-endpoints:
-  "POST /*/containers/create":
-    pre: [flocker]
-adapters:
-  flocker: http://powerstrip-flocker/flocker-adapter
-""")
-                # start powerstrip-flocker
-                POWERSTRIP_FLOCKER = "%s/powerstrip-flocker:%s" % (DOCKER_PULL_REPO, PF_VERSION)
-                run(ip, ["docker", "pull", POWERSTRIP_FLOCKER])
-                # TODO - come up with cleaner/nicer way of powerstrip-flocker
+                # start flocker-plugin
+                FLOCKER_PLUGIN = "%s/flocker-plugin:%s" % (DOCKER_PULL_REPO, PF_VERSION)
+                run(ip, ["docker", "pull", FLOCKER_PLUGIN])
+                # TODO - come up with cleaner/nicer way of flocker-plugin
                 # being able to establish its own host uuid (or volume
                 # mountpoints), such as API calls.
+                # See https://github.com/ClusterHQ/flocker-plugin/issues/2
+                # for how to do this now.
                 host_uuid = run(ip, ["python", "-c", "import json; "
                     "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
                 self.powerstripflockers[ip] = remote_service_for_test(self, ip,
-                    ["docker", "run", "--name=powerstrip-flocker",
+                    ["docker", "run", "--plugin", "--name=flocker",
                        "--expose", "80",
                        "-p", "9999:80", # so that we can detect it being up
                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
                        "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
                        "-e", "MY_HOST_UUID=%s" % (host_uuid,),
-                       POWERSTRIP_FLOCKER])
-                print "Waiting for powerstrip-flocker to show up on", ip, "..."
+                       FLOCKER_PLUGIN])
+                print "Waiting for flocker-plugin to show up on", ip, "..."
                 daemonReadyDeferreds.append(wait_for_socket(ip, 9999))
-
-                # start powerstrip
-                # TODO - use the new unix-socket powerstrip approach.
-                POWERSTRIP = "clusterhq/powerstrip:latest"
-                run(ip, ["docker", "pull", POWERSTRIP])
-                self.powerstrips[ip] = remote_service_for_test(self, ip,
-                    ["docker", "run", "--name=powerstrip",
-                       "-p", "2375:2375",
-                       "-v", "/var/run/docker.sock:/var/run/docker.sock",
-                       "-v", "/root/powerstrip-config/adapters.yml:"
-                             "/etc/powerstrip/adapters.yml",
-                       "--link", "powerstrip-flocker:powerstrip-flocker",
-                       POWERSTRIP])
-                print "Waiting for powerstrip to show up on", ip, "..."
-                daemonReadyDeferreds.append(wait_for_socket(ip, 2375))
 
             d = defer.gatherResults(daemonReadyDeferreds)
             # def debug():
