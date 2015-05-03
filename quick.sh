@@ -20,8 +20,8 @@ DOCKER_PULL_REPO="lmarsden"
 
 # Optionally do a docker build and push.
 if [ "$1" != "--no-build" ]; then
-    docker build -t ${DOCKER_PULL_REPO}/powerstrip-flocker .
-    docker push ${DOCKER_PULL_REPO}/powerstrip-flocker
+    docker build -t ${DOCKER_PULL_REPO}/powerstrip-flocker:volume-plugin .
+    docker push ${DOCKER_PULL_REPO}/powerstrip-flocker:volume-plugin
 fi
 
 # Run the tests.

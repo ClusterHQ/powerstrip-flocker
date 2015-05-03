@@ -54,60 +54,13 @@ from os import kill
 
 from characteristic import attributes
 
-@attributes(['address', 'process'])
-class RemoteService(object):
-    """
-    A record of a background SSH process and the node that it's running on.
-
-    :ivar bytes address: The IPv4 address on which the service is running.
-    :ivar Subprocess.Popen process: The running ``SSH`` process that is running
-        the remote process.
-    """
-
-
-def close(process):
-    """
-    Kill a process.
-
-    :param subprocess.Popen process: The process to be killed.
-    """
-    process.stdin.close()
-    kill(process.pid, SIGINT)
-
-
-def remote_service_for_test(test_case, address, command):
-    """
-    Start a remote process (via SSH) for a test and register a cleanup function
-    to stop it when the test finishes.
-
-    :param TestCase test_case: The test case instance on which to register
-        cleanup operations.
-    :param bytes address: The IPv4 address of the node on which to run
-        ``command``.
-    :param list command: The command line arguments to run remotely via SSH.
-    :returns: A ``RemoteService`` instance.
-    """
-    service = RemoteService(
-        address=address,
-        process=run_SSH(
-            port=22,
-            user='root',
-            node=address,
-            command=command,
-            input=b"",
-            key=None,
-            background=True
-        )
-    )
-    test_case.addCleanup(close, service.process)
-    return service
-
 # This refers to where to fetch the latest version of powerstrip-flocker from.
 # If you want faster development cycle than Docker automated builds allow you
 # can change it from "clusterhq" to your personal repo, and create a repo on
 # Docker hub called "powerstrip-flocker". Then modify $DOCKER_PULL_REPO in
 # quick.sh accordingly and use that script.
 DOCKER_PULL_REPO = "lmarsden"
+PF_VERSION = "volume-plugin"
 
 class PowerstripFlockerTests(TestCase):
     """
@@ -156,7 +109,7 @@ adapters:
   flocker: http://powerstrip-flocker/flocker-adapter
 """)
                 # start powerstrip-flocker
-                POWERSTRIP_FLOCKER = "%s/powerstrip-flocker:latest" % (DOCKER_PULL_REPO,)
+                POWERSTRIP_FLOCKER = "%s/powerstrip-flocker:%s" % (DOCKER_PULL_REPO, PF_VERSION)
                 run(ip, ["docker", "pull", POWERSTRIP_FLOCKER])
                 # TODO - come up with cleaner/nicer way of powerstrip-flocker
                 # being able to establish its own host uuid (or volume
@@ -365,3 +318,52 @@ def wait_for_socket(hostname, port):
         except socket.error:
             return False
     return loop_until(api_available)
+
+
+@attributes(['address', 'process'])
+class RemoteService(object):
+    """
+    A record of a background SSH process and the node that it's running on.
+
+    :ivar bytes address: The IPv4 address on which the service is running.
+    :ivar Subprocess.Popen process: The running ``SSH`` process that is running
+        the remote process.
+    """
+
+
+def close(process):
+    """
+    Kill a process.
+
+    :param subprocess.Popen process: The process to be killed.
+    """
+    process.stdin.close()
+    kill(process.pid, SIGINT)
+
+
+def remote_service_for_test(test_case, address, command):
+    """
+    Start a remote process (via SSH) for a test and register a cleanup function
+    to stop it when the test finishes.
+
+    :param TestCase test_case: The test case instance on which to register
+        cleanup operations.
+    :param bytes address: The IPv4 address of the node on which to run
+        ``command``.
+    :param list command: The command line arguments to run remotely via SSH.
+    :returns: A ``RemoteService`` instance.
+    """
+    service = RemoteService(
+        address=address,
+        process=run_SSH(
+            port=22,
+            user='root',
+            node=address,
+            command=command,
+            input=b"",
+            key=None,
+            background=True
+        )
+    )
+    test_case.addCleanup(close, service.process)
+    return service
