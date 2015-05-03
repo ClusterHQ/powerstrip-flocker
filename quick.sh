@@ -19,10 +19,21 @@ set -x -e
 DOCKER_PULL_REPO="lmarsden"
 
 # This is a docker binary which gets scp'd onto the nodes...
+
+# Recipe to create this binary on the host:
+# $ export BRANCHNAME=some_docker_branch
+# $ mkdir -p ~/Projects; cd ~/Projects
+# $ if [ ! -e docker ]; then git clone git@github.com:clusterhq/docker-plugins; mv docker-plugins docker; fi
+# $ cd docker
+# $ git checkout $BRANCHNAME
+# $ docker build -t $BRANCHNAME .
+# $ docker run --privileged --rm -ti -v `pwd`:/go/src/github.com/docker/docker $BRANCHNAME hack/make.sh binary
+
 DOCKER_BINARY="${HOME}/Projects/docker/bundles/1.5.0-plugins/binary/docker-1.5.0-plugins"
 
 KEY="${HOME}/.ssh/id_rsa_flocker"
 DOCKER_PATH_ON_HOST="/usr/bin/docker"
+USER="root"
 
 NODE1="172.16.255.240"
 NODE2="172.16.255.241"
@@ -30,9 +41,10 @@ NODE2="172.16.255.241"
 for NODE in $NODE1 $NODE2; do
     if [ -e $DOCKER_BINARY ]; then
         echo "Uploading modified docker to test node..."
-        scp -i $KEY $DOCKER_BINARY vagrant@$NODE:$DOCKER_PATH_ON_HOST
-        ssh -i $KEY vagrant@$NODE systemctl restart docker
-        ssh -i $KEY vagrant@$NODE docker --version
+        ssh -i $KEY $USER@$NODE systemctl stop docker
+        scp -i $KEY $DOCKER_BINARY $USER@$NODE:$DOCKER_PATH_ON_HOST
+        ssh -i $KEY $USER@$NODE systemctl start docker
+        ssh -i $KEY $USER@$NODE docker --version
     fi
 done
 
