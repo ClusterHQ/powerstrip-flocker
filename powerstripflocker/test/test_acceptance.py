@@ -1,4 +1,4 @@
-# Copyright ClusterHQ Limited. See LICENSE file for details.
+# Copyright ClusterHQ Inc. See LICENSE file for details.
 
 """
 Acceptance tests for powerstrip-flocker which can be run against the same

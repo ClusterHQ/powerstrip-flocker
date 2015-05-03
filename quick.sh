@@ -1,4 +1,5 @@
-#!/usr/bin/env bash -e
+#!/usr/bin/env bash
+set -x -e
 
 # First run (do this manually):
 # $ vagrant box add \
