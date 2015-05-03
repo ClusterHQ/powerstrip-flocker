@@ -45,9 +45,62 @@ import socket
 import treq
 from treq.client import HTTPClient
 
-from flocker.acceptance.test_api import wait_for_cluster, remote_service_for_test
+from flocker.acceptance.test_api import get_test_cluster
 from flocker.acceptance.testtools import run_SSH
 from flocker.testtools import loop_until
+
+from signal import SIGINT
+from os import kill
+
+from characteristic import attributes
+
+@attributes(['address', 'process'])
+class RemoteService(object):
+    """
+    A record of a background SSH process and the node that it's running on.
+
+    :ivar bytes address: The IPv4 address on which the service is running.
+    :ivar Subprocess.Popen process: The running ``SSH`` process that is running
+        the remote process.
+    """
+
+
+def close(process):
+    """
+    Kill a process.
+
+    :param subprocess.Popen process: The process to be killed.
+    """
+    process.stdin.close()
+    kill(process.pid, SIGINT)
+
+
+def remote_service_for_test(test_case, address, command):
+    """
+    Start a remote process (via SSH) for a test and register a cleanup function
+    to stop it when the test finishes.
+
+    :param TestCase test_case: The test case instance on which to register
+        cleanup operations.
+    :param bytes address: The IPv4 address of the node on which to run
+        ``command``.
+    :param list command: The command line arguments to run remotely via SSH.
+    :returns: A ``RemoteService`` instance.
+    """
+    service = RemoteService(
+        address=address,
+        process=run_SSH(
+            port=22,
+            user='root',
+            node=address,
+            command=command,
+            input=b"",
+            key=None,
+            background=True
+        )
+    )
+    test_case.addCleanup(close, service.process)
+    return service
 
 # This refers to where to fetch the latest version of powerstrip-flocker from.
 # If you want faster development cycle than Docker automated builds allow you
@@ -77,7 +130,7 @@ class PowerstripFlockerTests(TestCase):
         """
         self.agent = Agent(reactor) # no connectionpool
         self.client = HTTPClient(self.agent)
-        d = wait_for_cluster(self, 2)
+        d = get_test_cluster(self, 2)
         def got_cluster(cluster):
             self.cluster = cluster
             self.powerstripflockers = {}
