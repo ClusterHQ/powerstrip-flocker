@@ -91,11 +91,11 @@ class PowerstripFlockerTests(TestCase):
             for ip in self.ips:
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
-                for proc in ("flocker-plugin",):
+                for container in ("flocker",):
                     try:
-                        run(ip, ["docker", "rm", "-f", proc])
+                        run(ip, ["docker", "rm", "-f", container])
                     except Exception:
-                        print proc, "was not running, not killed, OK."
+                        print container, "was not running, not killed, OK."
                 # start flocker-plugin
                 FLOCKER_PLUGIN = "%s/flocker-plugin:%s" % (DOCKER_PULL_REPO, PF_VERSION)
                 run(ip, ["docker", "pull", FLOCKER_PLUGIN])
