@@ -1,8 +1,9 @@
 """
-A Docker extension for Flocker to enable portable volumes without wrapping
-Docker.
+A Powerstrip adapter which integrates Docker with Flocker to enable portable
+volumes without wrapping Docker.
 
 See:
+* https://github.com/clusterhq/powerstrip
 * https://github.com/clusterhq/flocker
 """
 
@@ -25,7 +26,11 @@ class HandshakeResource(resource.Resource):
 
     def render_POST(self, request):
         return json.dumps(dict(
-             Implements=["volume"],
+             InterestedIn=["volume"],
+             Name="flocker",
+             Author="Luke Marsden <luke@clusterhq.com>",
+             Org="ClusterHQ, Inc.",
+             Website="https://github.com/clusterhq/powerstrip-flocker/",
         ))
 
 class CreateResource(resource.Resource):
