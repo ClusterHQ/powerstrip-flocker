@@ -107,14 +107,14 @@ class PowerstripFlockerTests(TestCase):
                     "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
                 self.plugins[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--plugin", "--name=flocker",
-                       "--expose", "80",
-                       "-p", "9999:80", # so that we can detect it being up
                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
                        "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
                        "-e", "MY_HOST_UUID=%s" % (host_uuid,),
                        FLOCKER_PLUGIN])
                 print "Waiting for flocker-plugin to show up on", ip, "..."
-                daemonReadyDeferreds.append(wait_for_socket(ip, 9999))
+                # XXX This will only work for the first test, need to restart
+                # docker in tearDown.
+                daemonReadyDeferreds.append(wait_for_plugin(ip))
 
             d = defer.gatherResults(daemonReadyDeferreds)
             # def debug():
@@ -125,6 +125,11 @@ class PowerstripFlockerTests(TestCase):
         d.addCallback(got_cluster)
         return d
 
+    def tearDown(self):
+        for ip in self.ips:
+            shell(ip, "systemctl stop docker")
+            shell(ip, "systemctl start docker")
+
     def test_create_a_dataset(self):
         """
         Running a docker container specifying a dataset name which has never
@@ -132,6 +137,7 @@ class PowerstripFlockerTests(TestCase):
         """
         node1, node2 = sorted(self.ips)
         fsName = "test001"
+        print "About to run docker run..."
         shell(node1, "docker run "
                      "-v /flocker/%s:/data busybox "
                      "sh -c 'echo 1 > /data/file'" % (fsName,))
@@ -222,7 +228,7 @@ class PowerstripFlockerTests(TestCase):
         second instantiation of it persists.
         """
         pass
-    test_move_a_dataset_check_persistence.todo = "not implemented yet"
+    test_move_a_dataset_check_persistence.skip = "not implemented yet"
 
     def test_dataset_is_not_moved_when_being_used(self):
         """
@@ -231,7 +237,7 @@ class PowerstripFlockerTests(TestCase):
         underneath a running container.
         """
         pass
-    test_dataset_is_not_moved_when_being_used.todo = "not implemented yet"
+    test_dataset_is_not_moved_when_being_used.skip = "not implemented yet"
 
     def test_two_datasets_one_move_one_create(self):
         """
@@ -241,7 +247,7 @@ class PowerstripFlockerTests(TestCase):
         the container is started.
         """
         pass
-    test_two_datasets_one_move_one_create.todo = "not implemented yet"
+    test_two_datasets_one_move_one_create.skip = "not implemented yet"
 
 
 def shell(node, command, input=""):
@@ -264,6 +270,13 @@ def run(node, command, input=""):
     #print "Output from", node + ":", result, "(%s)" % (command,)
     return result
 
+
+def wait_for_plugin(hostname):
+    """
+    Wait until a non-zero number of plugins are loaded.
+    """
+    return loop_until(lambda:
+            "Plugins: 0" not in shell(hostname, "docker info |grep Plugins"))
 
 def wait_for_socket(hostname, port):
     # TODO: upstream this modified version into flocker (it was copied from
