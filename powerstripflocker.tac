@@ -22,5 +22,5 @@ def getAdapter():
 
 application = service.Application("Powerstrip Flocker Adapter")
 
-adapterServer = internet.UNIXServer("/var/run/docker-plugin/plugin.sock", getAdapter())
+adapterServer = internet.UNIXServer("/var/run/docker-plugin/p.s", getAdapter())
 adapterServer.setServiceParent(application)
