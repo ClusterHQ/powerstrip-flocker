@@ -68,13 +68,13 @@ class PowerstripFlockerTests(TestCase):
     """
 
     # Slow builds because initial runs involve pulling some docker images
-    # (powerstrip, and flocker-plugin).
+    # (flocker-plugin).
     timeout = 1200
 
     def setUp(self):
         """
-        Ready the environment for tests which actually run docker against
-        powerstrip with flocker-plugin enabled.
+        Ready the environment for tests which actually run docker
+        with flocker-plugin enabled.
 
         * Log into each node in turn:
           * Load flocker-plugin into docker
@@ -84,8 +84,7 @@ class PowerstripFlockerTests(TestCase):
         d = get_test_cluster(self, 2)
         def got_cluster(cluster):
             self.cluster = cluster
-            self.powerstripflockers = {}
-            self.powerstrips = {}
+            self.plugins = {}
             daemonReadyDeferreds = []
             self.ips = [node.address for node in cluster.nodes]
             for ip in self.ips:
@@ -106,7 +105,7 @@ class PowerstripFlockerTests(TestCase):
                 # for how to do this now.
                 host_uuid = run(ip, ["python", "-c", "import json; "
                     "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
-                self.powerstripflockers[ip] = remote_service_for_test(self, ip,
+                self.plugins[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--plugin", "--name=flocker",
                        "--expose", "80",
                        "-p", "9999:80", # so that we can detect it being up
@@ -133,9 +132,9 @@ class PowerstripFlockerTests(TestCase):
         """
         node1, node2 = sorted(self.ips)
         fsName = "test001"
-        powerstrip(node1, "docker run "
-                          "-v /flocker/%s:/data busybox "
-                          "sh -c 'echo 1 > /data/file'" % (fsName,))
+        shell(node1, "docker run "
+                     "-v /flocker/%s:/data busybox "
+                     "sh -c 'echo 1 > /data/file'" % (fsName,))
         url = self.cluster.base_url + "/configuration/datasets"
         d = self.client.get(url)
         d.addCallback(treq.json_content)
@@ -159,9 +158,9 @@ class PowerstripFlockerTests(TestCase):
         """
         node1, node2 = sorted(self.ips)
         fsName = "test001"
-        container_id = powerstrip(node1, "docker run -d "
-                                         "-v /flocker/%s:/data busybox "
-                                         "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+        container_id = shell(node1, "docker run -d "
+                                    "-v /flocker/%s:/data busybox "
+                                    "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
         # The volume that Docker now has mounted...
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id]))
         volume = docker_inspect[0]["Volumes"].values()[0]
@@ -183,16 +182,16 @@ class PowerstripFlockerTests(TestCase):
         node1, node2 = sorted(self.ips)
         fsName = "test001"
         # First volume...
-        container_id_1 = powerstrip(node1, "docker run -d "
-                                           "-v /flocker/%s:/data busybox "
-                                           "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+        container_id_1 = shell(node1, "docker run -d "
+                                      "-v /flocker/%s:/data busybox "
+                                      "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_1]))
         volume_1 = docker_inspect[0]["Volumes"].values()[0]
 
         # Second volume...
-        container_id_2 = powerstrip(node1, "docker run -d "
-                                           "-v /flocker/%s:/data busybox "
-                                           "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+        container_id_2 = shell(node1, "docker run -d "
+                                      "-v /flocker/%s:/data busybox "
+                                      "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_2]))
         volume_2 = docker_inspect[0]["Volumes"].values()[0]
         # ... have the same flocker UUID.
@@ -207,13 +206,13 @@ class PowerstripFlockerTests(TestCase):
         node1, node2 = sorted(self.ips)
         fsName = "test001"
         # Write some bytes to a volume on one host...
-        powerstrip(node1, "docker run "
-                          "-v /flocker/%s:/data busybox "
-                          "sh -c 'echo chicken > /data/file'" % (fsName,))
+        shell(node1, "docker run "
+                     "-v /flocker/%s:/data busybox "
+                     "sh -c 'echo chicken > /data/file'" % (fsName,))
         # ... and read them from the same named volume on another...
-        container_id = powerstrip(node2, "docker run -d "
-                                         "-v /flocker/%s:/data busybox "
-                                         "sh -c 'cat /data/file'" % (fsName,)).strip()
+        container_id = shell(node2, "docker run -d "
+                                    "-v /flocker/%s:/data busybox "
+                                    "sh -c 'cat /data/file'" % (fsName,)).strip()
         output = run(node2, ["docker", "logs", container_id])
         self.assertEqual(output.strip(), "chicken")
 
@@ -243,15 +242,6 @@ class PowerstripFlockerTests(TestCase):
         """
         pass
     test_two_datasets_one_move_one_create.todo = "not implemented yet"
-
-
-def powerstrip(node, command, input=""):
-    """
-    Run a docker command (byte string) through powerstrip, with optional input
-    (bytes).
-    """
-    command = ["sh", "-c", "DOCKER_HOST=localhost:2375 " + command]
-    return run(node, command, input)
 
 
 def shell(node, command, input=""):
