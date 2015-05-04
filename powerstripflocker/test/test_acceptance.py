@@ -90,6 +90,10 @@ class PowerstripFlockerTests(TestCase):
             for ip in self.ips:
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
+                shell(ip, "systemctl stop docker")
+                shell(ip, "systemctl start docker")
+                shell(ip, "systemctl stop flocker-agent")
+                shell(ip, "systemctl start flocker-agent")
                 for container in ("flocker",):
                     try:
                         run(ip, ["docker", "rm", "-f", container])
@@ -124,11 +128,6 @@ class PowerstripFlockerTests(TestCase):
             return d
         d.addCallback(got_cluster)
         return d
-
-    def tearDown(self):
-        for ip in self.ips:
-            shell(ip, "systemctl stop docker")
-            shell(ip, "systemctl start docker")
 
     def test_create_a_dataset(self):
         """
