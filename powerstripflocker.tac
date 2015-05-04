@@ -3,8 +3,7 @@
 from twisted.web import server, resource
 from twisted.application import service, internet
 
-from powerstripflocker.adapter import (HandshakeResource, CreateResource,
-    DestroyResource, MountResource, UnmountResource)
+from powerstripflocker.adapter import HandshakeResource, AdapterResource
 
 def getAdapter():
     root = resource.Resource()
