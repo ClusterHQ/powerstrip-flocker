@@ -33,22 +33,7 @@ class HandshakeResource(resource.Resource):
              Website="https://github.com/clusterhq/powerstrip-flocker/",
         ))
 
-class CreateResource(resource.Resource):
-    isLeaf = True
-    def render_POST(self, request):
-        return
-
-class DestroyResource(resource.Resource):
-    isLeaf = True
-    def render_POST(self, request):
-        return
-
-class UnmountResource(resource.Resource):
-    isLeaf = True
-    def render_POST(self, request):
-        return
-
-class MountResource(resource.Resource):
+class AdapterResource(resource.Resource):
     """
     A powerstrip pre-hook for container create.
     """
