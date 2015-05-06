@@ -28,4 +28,5 @@ else:
 
 if __name__ == '__main__':
     from admin.acceptance import main
-    main(sys.argv[1:], top_level=TOPLEVEL, base_path=BASEPATH)
+    main(sys.argv[1:] + ["powerstripflocker.test.test_acceptance"],
+            top_level=TOPLEVEL, base_path=BASEPATH)
