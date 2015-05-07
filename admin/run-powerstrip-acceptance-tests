@@ -11,6 +11,8 @@ FLOCKER_PATH = PF_PATH + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
 sys.path.insert(0, PF_PATH)
 
+print "***", sys.path
+
 # another hack - this time make the tests run faster by avoiding fetching lots
 # of docker images.
 from flocker.provision import _install
