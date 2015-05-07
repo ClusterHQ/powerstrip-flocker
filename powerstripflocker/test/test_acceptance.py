@@ -86,7 +86,8 @@ class PowerstripFlockerTests(TestCase):
         if path.exists(BUILDSLAVE_DOCKER_DIR):
             dockerCmd = ("cd %(dockerDir)s;"
                    "docker build -t custom-docker .;"
-                   "docker run --privileged --rm -e DOCKER_GITCOMMIT=`git log -1 --format=%%h` "
+                   "docker run --privileged --rm "
+                       "-e DOCKER_GITCOMMIT=`git log -1 --format=%%h` "
                        "-v %(dockerDir)s:/go/src/github.com/docker/docker "
                        "custom-docker hack/make.sh binary" % dict(dockerDir=BUILDSLAVE_DOCKER_DIR))
             print "Running docker command:", dockerCmd
