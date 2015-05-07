@@ -6,9 +6,8 @@ This demo will guide you through the steps needed to run a multi-node powerstrip
 
 Ensure that you have the following installed on your system:
 
- * [virtualbox](https://www.virtualbox.org/wiki/Downloads)
- * [vagrant](http://www.vagrantup.com/downloads.html)
- * [python](https://www.python.org/downloados/)
+ * [vagrant](http://www.vagrantup.com/downloads.html) **1.7.2 or later** (e.g. download from the website, don't use Ubuntu package repo)
+ * [python](https://www.python.org/downloados/) 2.7
 
 Also you need the `yaml` python module installed on your machine - you may wish to run `sudo pip install pyyaml`
 
@@ -20,7 +19,10 @@ We need the vagrant AWS plugin to provision machines with AWS - once vagrant is 
 
 ```bash
 $ vagrant plugin install vagrant-aws
+$ vagrant box add dummy https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box
 ```
+
+**NB:** On Ubuntu installing the latest vagrant (1.7.2+) from http://www.vagrantup.com/downloads.html was necessary.
 
 #### Clone repository
 
@@ -34,6 +36,8 @@ $ cd powerstrip-flocker/vagrant-aws
 #### `settings.yml`
 
 Copy `settings.yml.sample` to `settings.yml` and fill in the details.
+
+**NB:** This demo only works in AWS region us-east-1.
 
 #### `vagrant up`
 
