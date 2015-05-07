@@ -91,3 +91,4 @@ This uses vagrant to bring up the demo on your local machine.
 This uses vagrant to bring up the demo on AWS EC2 instances.
 
 [Click here for the AWS demo](https://github.com/ClusterHQ/powerstrip-flocker/tree/master/vagrant-aws)
+
