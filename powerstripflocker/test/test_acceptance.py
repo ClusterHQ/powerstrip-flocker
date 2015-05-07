@@ -86,7 +86,7 @@ class PowerstripFlockerTests(TestCase):
         if path.exists(BUILDSLAVE_DOCKER_DIR):
             exit = system("cd %s;"
                    "docker build -t custom-docker .;"
-                   "docker run --privileged --rm -ti "
+                   "docker run --privileged --rm "
                        "-v `pwd`:/go/src/github.com/docker/docker "
                        "custom-docker hack/make.sh binary" % (BUILDSLAVE_DOCKER_DIR,))
             if exit > 0:
