@@ -147,6 +147,8 @@ class PowerstripFlockerTests(TestCase):
                 shell(ip, "systemctl stop docker")
                 # Copy docker into the respective node
                 self._injectDockerOnce(ip)
+                # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
+                shell(ip, "mkdir -p /usr/share/docker/plugins")
                 shell(ip, "systemctl start docker")
                 shell(ip, "systemctl stop flocker-agent")
                 shell(ip, "systemctl start flocker-agent")
