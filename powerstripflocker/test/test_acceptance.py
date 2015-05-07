@@ -49,7 +49,7 @@ from flocker.acceptance.testtools import run_SSH
 from flocker.testtools import loop_until
 
 from signal import SIGINT
-from os import kill
+from os import kill, system, path
 
 from characteristic import attributes
 
@@ -61,6 +61,11 @@ from characteristic import attributes
 DOCKER_PULL_REPO = "lmarsden"
 PF_VERSION = "volume-plugin"
 
+# hacks hacks hacks
+BUILD_ONCE = []
+INJECT_ONCE = {}
+BUILDSLAVE_DOCKER_DIR = "/home/buildslave/fedora-vagrant/flocker-acceptance-vagrant-fedora-20/build/docker"
+
 class PowerstripFlockerTests(TestCase):
     """
     Real flocker-plugin tests against two nodes using the flocker
@@ -70,6 +75,49 @@ class PowerstripFlockerTests(TestCase):
     # Slow builds because initial runs involve pulling some docker images
     # (flocker-plugin).
     timeout = 1200
+
+
+    def _buildDockerOnce(self):
+        """
+        Using blocking APIs, build docker once per test run.
+        """
+        if len(BUILD_ONCE):
+            return
+        if path.exists(BUILDSLAVE_DOCKER_DIR):
+            exit = system("cd %s;"
+                   "docker build -t custom-docker .;"
+                   "docker run --privileged --rm -ti "
+                       "-v `pwd`:/go/src/github.com/docker/docker "
+                       "custom-docker hack/make.sh binary" % (BUILDSLAVE_DOCKER_DIR,))
+            if exit > 0:
+                raise Exception("failed to build docker")
+        BUILD_ONCE.append(1)
+
+
+    def _injectDockerOnce(self, ip):
+        """
+        Using blocking APIs, copy the docker binary from whence it was built in
+        _buildDockerOnce to the given ip.
+        """
+        if ip not in INJECT_ONCE:
+            INJECT_ONCE[ip] = []
+        if len(INJECT_ONCE[ip]):
+            return
+
+        if path.exists(BUILDSLAVE_DOCKER_DIR):
+            # e.g. 1.5.0-plugins
+            dockerVersion = open("%s/VERSION" % (BUILDSLAVE_DOCKER_DIR,)).read().strip()
+            binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/binary/docker-%(dockerVersion)s" % dict(
+                    dockerDir=BUILDSLAVE_DOCKER_DIR, dockerVersion=dockerVersion)
+            hostBinaryPath = "/usr/bin/docker"
+            key = "/home/buildslave/.ssh/id_rsa_flocker"
+            exit = system("scp -i %(key)s %(binaryPath)s root@%(ip)s:%(hostBinaryPath)s" % dict(
+                key=key, hostBinaryPath=hostBinaryPath, binaryPath=binaryPath, ip=ip))
+            if exit > 0:
+                raise Exception("failed to inject docker into %(ip)s" % dict(ip=ip))
+
+        INJECT_ONCE[ip].append(1)
+
 
     def setUp(self):
         """
@@ -87,10 +135,14 @@ class PowerstripFlockerTests(TestCase):
             self.plugins = {}
             daemonReadyDeferreds = []
             self.ips = [node.address for node in cluster.nodes]
+            # Build docker if necessary (if there's a docker submodule)
+            self._buildDockerOnce()
             for ip in self.ips:
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
                 shell(ip, "systemctl stop docker")
+                # Copy docker into the respective node
+                self._injectDockerOnce(ip)
                 shell(ip, "systemctl start docker")
                 shell(ip, "systemctl stop flocker-agent")
                 shell(ip, "systemctl start flocker-agent")
