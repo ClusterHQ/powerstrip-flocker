@@ -117,38 +117,36 @@ class MountResource(resource.Resource):
             if json_parsed['Name'] is not None and json_parsed['Name'] != "":
                 binds = [json_parsed['Name']]
                 for bind in binds:
-                    host_path, remainder = bind, ""
+                    fs, remainder = bind, ""
                     # TODO validation
                     # if "/" in fs:
                     #    raise Exception("Not allowed flocker filesystems more than one level deep")
-                    if host_path.startswith("/flocker/"):
-                        fs = host_path[len("/flocker/"):]
-                        old_binds.append((fs, remainder))
-                        # if a dataset exists, and is in the right place, we're cool.
-                        if fs in configured_dataset_mapping:
-                            dataset = configured_dataset_mapping[fs]
-                            if dataset["primary"] == self.ip:
-                                # simulate "immediate success"
-                                fs_create_deferreds.append(defer.succeed((fs, dataset["dataset_id"])))
-                            else:
-                                # if a dataset exists, but is on the wrong server [TODO
-                                # and is not being used], then move it in place.
-                                d = self.client.post(
-                                    self.base_url + "/configuration/datasets/%s" % (
-                                        dataset["dataset_id"].encode('ascii'),),
-                                    json.dumps({"primary": self.ip}),
-                                    headers={'Content-Type': ['application/json']})
-                                d.addCallback(treq.json_content)
-                                d.addCallback(wait_until_volume_in_place, fs=fs)
-                                fs_create_deferreds.append(d)
+                    old_binds.append((fs, remainder))
+                    # if a dataset exists, and is in the right place, we're cool.
+                    if fs in configured_dataset_mapping:
+                        dataset = configured_dataset_mapping[fs]
+                        if dataset["primary"] == self.ip:
+                            # simulate "immediate success"
+                            fs_create_deferreds.append(defer.succeed((fs, dataset["dataset_id"])))
                         else:
-                            # if a dataset doesn't exist at all, create it on this server.
-                            d = self.client.post(self.base_url + "/configuration/datasets",
-                                json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
+                            # if a dataset exists, but is on the wrong server [TODO
+                            # and is not being used], then move it in place.
+                            d = self.client.post(
+                                self.base_url + "/configuration/datasets/%s" % (
+                                    dataset["dataset_id"].encode('ascii'),),
+                                json.dumps({"primary": self.ip}),
                                 headers={'Content-Type': ['application/json']})
                             d.addCallback(treq.json_content)
                             d.addCallback(wait_until_volume_in_place, fs=fs)
                             fs_create_deferreds.append(d)
+                    else:
+                        # if a dataset doesn't exist at all, create it on this server.
+                        d = self.client.post(self.base_url + "/configuration/datasets",
+                            json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
+                            headers={'Content-Type': ['application/json']})
+                        d.addCallback(treq.json_content)
+                        d.addCallback(wait_until_volume_in_place, fs=fs)
+                        fs_create_deferreds.append(d)
 
             d = defer.gatherResults(fs_create_deferreds)
             def got_created_and_moved_datasets(list_new_datasets):
