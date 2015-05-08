@@ -89,7 +89,7 @@ class PowerstripFlockerTests(TestCase):
                    "docker run --privileged --rm "
                        "-e DOCKER_GITCOMMIT=`git log -1 --format=%%h` "
                        "-v %(dockerDir)s:/go/src/github.com/docker/docker "
-                       "custom-docker hack/make.sh binary" % dict(
+                       "custom-docker hack/make.sh dynbinary" % dict(
                            dockerDir=BUILDSLAVE_DOCKER_DIR))
             print "Running docker command:", dockerCmd
             exit = system(dockerCmd)
