@@ -114,8 +114,8 @@ class MountResource(resource.Resource):
             fs_create_deferreds = []
             old_binds = []
             print "got json_parsed...", json_parsed
-            if json_parsed['HostPath'] is not None and json_parsed['HostPath'] != "":
-                binds = [json_parsed['HostPath']]
+            if json_parsed['Name'] is not None and json_parsed['Name'] != "":
+                binds = [json_parsed['Name']]
                 for bind in binds:
                     host_path, remainder = bind, ""
                     # TODO validation
@@ -160,10 +160,13 @@ class MountResource(resource.Resource):
                             (self.host_uuid, dataset_mapping[fs]))
                 new_json = {}
                 if new_binds:
-                    new_json["ModifiedHostPath"] = new_binds[0]
+                    new_json["Mountpoint"] = new_binds[0]
+                    new_json["Err"] = None
                 else:
                     # This is how you indicate not handling this request
-                    new_json["ModifiedHostPath"] = ""
+                    new_json["Mountpoint"] = ""
+                    new_json["Err"] = "unable to handle"
+
                 print "<<< responding with", new_json
                 request.write(json.dumps(new_json))
                 request.finish()
