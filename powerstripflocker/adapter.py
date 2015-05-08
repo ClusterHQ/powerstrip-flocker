@@ -26,14 +26,19 @@ class HandshakeResource(resource.Resource):
 
     def render_POST(self, request):
         return json.dumps(dict(
-             InterestedIn=["volume"],
-             Name="flocker",
-             Author="Luke Marsden <luke@clusterhq.com>",
-             Org="ClusterHQ, Inc.",
-             Website="https://github.com/clusterhq/powerstrip-flocker/",
+             Implements=["VolumeDriver"],
         ))
 
-class AdapterResource(resource.Resource):
+class CreateResource(resource.Resource):
+    pass
+
+class RemoveResource(resource.Resource):
+    pass
+
+class PathResource(resource.Resource):
+    pass
+
+class MountResource(resource.Resource):
     """
     A powerstrip pre-hook for container create.
     """
@@ -192,3 +197,6 @@ def loop_until(predicate):
         return result
     d.addCallback(loop)
     return d
+
+class UnmountResource(resource.Resource):
+    pass

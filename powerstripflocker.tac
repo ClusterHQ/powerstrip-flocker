@@ -3,24 +3,23 @@
 from twisted.web import server, resource
 from twisted.application import service, internet
 
-from powerstripflocker.adapter import HandshakeResource, AdapterResource
+from powerstripflocker.adapter import (HandshakeResource, CreateResource,
+    RemoveResource, PathResource, MountResource, UnmountResource)
 
 def getAdapter():
     root = resource.Resource()
-
-    v1 = resource.Resource()
-    root.putChild("v1", v1)
-
-    volume = resource.Resource()
-    v1.putChild("volume", volume)
-    volume.putChild("volumes", AdapterResource())
-
-    v1.putChild("handshake", HandshakeResource())
+    root.putChild("Plugin.Activate", HandshakeResource())
+    root.putChild("VolumeDriver.Create", CreateResource())
+    root.putChild("VolumeDriver.Remove", RemoveResource())
+    root.putChild("VolumeDriver.Path", PathResource())
+    root.putChild("VolumeDriver.Mount", MountResource())
+    root.putChild("VolumeDriver.Unmount", UnmountResource())
 
     site = server.Site(root)
     return site
 
 application = service.Application("Powerstrip Flocker Adapter")
 
-adapterServer = internet.UNIXServer("/var/run/docker-plugin/p.s", getAdapter())
+# XXX need to bind-mount /usr/share/docker/plugins into this container.
+adapterServer = internet.UNIXServer("/usr/share/docker/plugins/flocker.sock", getAdapter())
 adapterServer.setServiceParent(application)

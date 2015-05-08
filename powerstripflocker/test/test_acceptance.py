@@ -81,6 +81,8 @@ class PowerstripFlockerTests(TestCase):
         """
         Using blocking APIs, build docker once per test run.
         """
+        return
+        """
         if len(BUILD_ONCE):
             return
         if path.exists(BUILDSLAVE_DOCKER_DIR):
@@ -96,12 +98,15 @@ class PowerstripFlockerTests(TestCase):
             if exit > 0:
                 raise Exception("failed to build docker")
         BUILD_ONCE.append(1)
+        """
 
 
     def _injectDockerOnce(self, ip):
         """
         Using blocking APIs, copy the docker binary from whence it was built in
         _buildDockerOnce to the given ip.
+        """
+        return
         """
         if ip not in INJECT_ONCE:
             INJECT_ONCE[ip] = []
@@ -121,6 +126,7 @@ class PowerstripFlockerTests(TestCase):
                 raise Exception("failed to inject docker into %(ip)s" % dict(ip=ip))
 
         INJECT_ONCE[ip].append(1)
+        """
 
 
     def setUp(self):
