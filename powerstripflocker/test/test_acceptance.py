@@ -111,7 +111,7 @@ class PowerstripFlockerTests(TestCase):
         if path.exists(BUILDSLAVE_DOCKER_DIR):
             # e.g. 1.5.0-plugins
             dockerVersion = open("%s/VERSION" % (BUILDSLAVE_DOCKER_DIR,)).read().strip()
-            binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/binary/docker-%(dockerVersion)s" % dict(
+            binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/dynbinary/docker-%(dockerVersion)s" % dict(
                     dockerDir=BUILDSLAVE_DOCKER_DIR, dockerVersion=dockerVersion)
             hostBinaryPath = "/usr/bin/docker"
             key = "/home/buildslave/.ssh/id_rsa_flocker"
