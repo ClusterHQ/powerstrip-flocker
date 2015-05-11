@@ -6,10 +6,11 @@ Run some powerstrip acceptance tests.
 # hack to get access to flocker module in submodule (rather than a version of
 # flocker that happens to be installed locally)
 import sys, os
-FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../")) + "/flocker"
+BASE_PATH = os.path.dirname(os.path.realpath(__file__ + "/../"))
+FLOCKER_PATH = BASE_PATH + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
 
-os.system("cp -va %s %s/%s" % ("extra-vagrant-acceptance-targets/*",
+os.system("cp -va %s/%s %s/%s" % (BASE_PATH, "extra-vagrant-acceptance-targets/*",
     FLOCKER_PATH, "admin/vagrant-acceptance-targets/"))
 
 # another hack - this time make the tests run faster by avoiding fetching lots
