@@ -65,6 +65,7 @@ PF_VERSION = "volume-plugin"
 BUILD_ONCE = []
 INJECT_ONCE = {}
 BUILDSLAVE_DOCKER_DIR = "/home/buildslave/fedora-vagrant/flocker-acceptance-vagrant-fedora-20/build/docker"
+KEY = "/root/.ssh/id_rsa_flocker"
 
 class PowerstripFlockerTests(TestCase):
     """
@@ -329,7 +330,7 @@ def run(node, command, input=""):
     with optional input (bytes).
     """
     #print "Running", command, "on", node
-    result = run_SSH(22, "root", node, command, input)
+    result = run_SSH(22, "root", node, command, input, key=KEY)
     #print "Output from", node + ":", result, "(%s)" % (command,)
     return result
 
@@ -340,6 +341,7 @@ def wait_for_plugin(hostname):
     """
     return loop_until(lambda:
             "Plugins: 0" not in shell(hostname, "docker info |grep Plugins"))
+
 
 def wait_for_socket(hostname, port):
     # TODO: upstream this modified version into flocker (it was copied from
@@ -402,7 +404,7 @@ def remote_service_for_test(test_case, address, command):
             node=address,
             command=command,
             input=b"",
-            key=None,
+            key=KEY,
             background=True
         )
     )
