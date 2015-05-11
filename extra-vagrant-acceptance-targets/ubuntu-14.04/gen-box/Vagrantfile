@@ -35,44 +35,20 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 $script = <<SCRIPT
 export DEBIAN_FRONTEND=noninteractive
 
+apt-add-repository ppa:zfs-native/stable
 apt-get update
 
-echo "Installing ZFS from latest git HEAD"
-apt-get -y install build-essential gawk alien fakeroot linux-headers-$(uname -r) zlib1g-dev uuid-dev libblkid-dev libselinux-dev parted lsscsi dh-autoreconf linux-crashdump git
-
-# As of Apr 2 2015, recommended ZoL revisions from Richard Yao:
-good_zfs_version="7f3e466"
-good_spl_version="6ab0866"
-
-# Compile and install spl
-cd ~/
-git clone https://github.com/zfsonlinux/spl
-cd spl
-git checkout $good_spl_version
-./autogen.sh
-./configure
-make
-make deb
-sudo dpkg -i *.deb
-
-# Compile and install zfs
-cd ~/
-git clone https://github.com/zfsonlinux/zfs
-cd zfs
-git checkout $good_zfs_version
-./autogen.sh
-./configure
-make
-make deb
-sudo dpkg -i *.deb
+apt-get install -y ubuntu-zfs
 
 flocker_tag="0.4.0"
-
-export DEBIAN_FRONTEND=noninteractive
 
 if [[ ! -x /vagrant ]]; then
     ln -s /root/ubuntu /vagrant
 fi
+
+echo "Installing docker..."
+
+wget -qO- https://get.docker.com/ | sh
 
 echo "Cloning flocker..."
 cd /opt
