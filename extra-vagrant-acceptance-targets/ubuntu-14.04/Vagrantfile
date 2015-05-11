@@ -24,9 +24,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
 $master = <<MASTER
 
-# allow acceptance test to log in as root because it likes doing that.
-cp /home/vagrant/.ssh/authorized_keys /root/.ssh/
-
 IP=172.16.255.240
 CONTROLIP=172.16.255.240
 
@@ -61,9 +58,6 @@ MASTER
 
 
 $minion = <<MINION
-
-# allow acceptance test to log in as root because it likes doing that.
-cp /home/vagrant/.ssh/authorized_keys /root/.ssh/
 
 IP=172.16.255.241
 CONTROLIP=172.16.255.240
