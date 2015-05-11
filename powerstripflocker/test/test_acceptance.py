@@ -216,8 +216,8 @@ class PowerstripFlockerTests(TestCase):
                 # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
                 shell(ip, "mkdir -p /usr/share/docker/plugins")
                 shell(ip, "initctl start docker")
-                shell(ip, "initctl stop flocker-agent")
-                shell(ip, "initctl start flocker-agent")
+                shell(ip, "supervisorctl stop flocker-agent")
+                shell(ip, "supervisorctl start flocker-agent")
                 for container in ("flocker",):
                     try:
                         run(ip, ["docker", "rm", "-f", container])
