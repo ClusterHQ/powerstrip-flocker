@@ -18,6 +18,17 @@ os.system("cp -va %s/%s %s/%s" % (BASE_PATH, "extra-vagrant-acceptance-targets/*
 from flocker.provision import _install
 del _install.ACCEPTANCE_IMAGES[:]
 
+def configure_cluster(control_node, agent_nodes):
+    pass
+
+def stop_cluster(control_node, agent_nodes):
+    pass
+
+# the ubuntu vagrant acceptance testing nodes come pre-prepared with the right
+# control/agent bits running
+_install.configure_cluster = configure_cluster
+_install.stop_cluster = stop_cluster
+
 from twisted.python.filepath import FilePath
 import sys
 
