@@ -30,6 +30,13 @@ for parent in list(path.parents()) + [FilePath(FLOCKER_PATH)]:
 else:
     raise ImportError("Could not find top-level.")
 
+# three hacks are lucky right
+from fabric.api import env
+print "!!!", env.key_filename
+if not env.key_filename:
+    env.key_filename = []
+env.key_filename.append("/root/.ssh/id_rsa_flocker")
+
 if __name__ == '__main__':
     from admin.acceptance import main
     main(sys.argv[1:] + ["powerstripflocker.test.test_acceptance"],
