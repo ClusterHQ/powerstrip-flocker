@@ -152,14 +152,14 @@ class PowerstripFlockerTests(TestCase):
             for ip in self.ips:
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
-                shell(ip, "stop docker")
+                shell(ip, "initctl stop docker")
                 # Copy docker into the respective node
                 self._injectDockerOnce(ip)
                 # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
                 shell(ip, "mkdir -p /usr/share/docker/plugins")
-                shell(ip, "start docker")
-                shell(ip, "stop flocker-agent")
-                shell(ip, "start flocker-agent")
+                shell(ip, "initctl start docker")
+                shell(ip, "initctl stop flocker-agent")
+                shell(ip, "initctl start flocker-agent")
                 for container in ("flocker",):
                     try:
                         run(ip, ["docker", "rm", "-f", container])
