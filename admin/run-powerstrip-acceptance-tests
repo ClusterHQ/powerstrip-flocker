@@ -9,6 +9,9 @@ import sys, os
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../")) + "/flocker"
 sys.path.insert(0, FLOCKER_PATH)
 
+os.system("cp -va %s %s/%s" % ("extra-vagrant-acceptance-targets/*",
+    FLOCKER_PATH, "admin/vagrant-acceptance-targets/"))
+
 # another hack - this time make the tests run faster by avoiding fetching lots
 # of docker images.
 from flocker.provision import _install
