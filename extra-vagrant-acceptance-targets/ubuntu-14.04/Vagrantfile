@@ -22,14 +22,74 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.cache.scope = :box
   end
 
+$master = <<MASTER
+
+IP=172.16.255.240
+CONTROLIP=172.16.255.240
+
+# setup flocker-zfs-agent on both nodes
+
+FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
+cmd="$FLOCKER_ZFS_AGENT $IP $CONTROLIP"
+service="flocker-zfs-agent"
+
+cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=$cmd
+EOF
+
+supervisorctl update
+supervisorctl start $service
+
+# setup flocker-control on master only
+
+FLOCKER_CONTROL_PORT=4523
+FLOCKER_CONTROL=`which flocker-control`
+cmd="$FLOCKER_CONTROL -p tcp:$FLOCKER_CONTROL_PORT"
+service="flocker-control"
+
+cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=$cmd
+EOF
+
+supervisorctl update
+supervisorctl start $service
+
+MASTER
+
+
+$minion = <<MINION
+
+IP=172.16.255.241
+CONTROLIP=172.16.255.240
+
+# setup flocker-zfs-agent on both nodes
+
+FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
+cmd="$FLOCKER_ZFS_AGENT $IP $CONTROLIP"
+service="flocker-zfs-agent"
+
+cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=$cmd
+EOF
+
+supervisorctl update
+supervisorctl start $service
+
+MINION
+
   config.vm.define "node1" do |node1|
     node1.vm.network :private_network, :ip => "172.16.255.240"
     node1.vm.hostname = "node1"
+    node1.vm.provision "shell", inline: $master
   end
 
   config.vm.define "node2" do |node2|
     node2.vm.network :private_network, :ip => "172.16.255.241"
     node2.vm.hostname = "node2"
+    node2.vm.provision "shell", inline: $minion
   end
 
 end
