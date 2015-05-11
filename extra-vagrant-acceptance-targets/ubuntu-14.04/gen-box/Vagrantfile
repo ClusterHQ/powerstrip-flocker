@@ -1,0 +1,111 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby sw=2 :
+
+# This requires Vagrant 1.6.2 or newer (earlier versions can't reliably
+# configure the Fedora 20 network stack).
+Vagrant.require_version ">= 1.6.2"
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "ubuntu/trusty64"
+
+  begin
+    config.vm.box_version = "= " + ENV.fetch('FLOCKER_BOX_VERSION')
+  rescue KeyError
+  end
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+    config.cache.scope = :box
+  end
+
+  config.vm.define "node1" do |node1|
+    node1.vm.network :private_network, :ip => "172.16.255.240"
+    node1.vm.hostname = "node1"
+  end
+
+  config.vm.define "node2" do |node2|
+    node2.vm.network :private_network, :ip => "172.16.255.241"
+    node2.vm.hostname = "node2"
+  end
+
+$script = <<SCRIPT
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+
+echo "Installing ZFS from latest git HEAD"
+apt-get -y install build-essential gawk alien fakeroot linux-headers-$(uname -r) zlib1g-dev uuid-dev libblkid-dev libselinux-dev parted lsscsi dh-autoreconf linux-crashdump git
+
+# As of Apr 2 2015, recommended ZoL revisions from Richard Yao:
+good_zfs_version="7f3e466"
+good_spl_version="6ab0866"
+
+# Compile and install spl
+cd ~/
+git clone https://github.com/zfsonlinux/spl
+cd spl
+git checkout $good_spl_version
+./autogen.sh
+./configure
+make
+make deb
+sudo dpkg -i *.deb
+
+# Compile and install zfs
+cd ~/
+git clone https://github.com/zfsonlinux/zfs
+cd zfs
+git checkout $good_zfs_version
+./autogen.sh
+./configure
+make
+make deb
+sudo dpkg -i *.deb
+
+flocker_tag="0.4.0"
+
+export DEBIAN_FRONTEND=noninteractive
+
+if [[ ! -x /vagrant ]]; then
+    ln -s /root/ubuntu /vagrant
+fi
+
+echo "Cloning flocker..."
+cd /opt
+git clone https://github.com/clusterhq/flocker
+cd flocker
+git checkout tags/$flocker_tag
+
+apt-get -y install python-setuptools python-dev
+
+# uhhh.. hack
+cd ~/
+wget https://pypi.python.org/packages/source/m/machinist/machinist-0.2.0.tar.gz
+tar zxfv machinist-0.2.0.tar.gz
+cd machinist-0.2.0
+python setup.py install
+
+# now install flocker
+cd /opt/flocker
+python setup.py install
+
+zfs_pool_name="flocker"
+
+if [[ -b /dev/xvdb ]]; then
+    echo "Detected EBS environment, setting up real zpool..."
+    umount /mnt # this is where xvdb is mounted by default
+    zpool create $zfs_pool_name /dev/xvdb
+elif [[ ! -b /dev/sdb ]]; then
+    echo "Setting up a toy zpool..."
+    truncate -s 10G /$zfs_pool_name-datafile
+    zpool create $zfs_pool_name /$zfs_pool_name-datafile
+fi
+SCRIPT
+
+  config.vm.provision "shell", inline: $script
+
+end
