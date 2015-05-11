@@ -31,7 +31,7 @@ CONTROLIP=172.16.255.240
 
 FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
 cmd="$FLOCKER_ZFS_AGENT $IP $CONTROLIP"
-service="flocker-zfs-agent"
+service="flocker-agent"
 
 cat << EOF > /etc/supervisor/conf.d/$service.conf
 [program:$service]
