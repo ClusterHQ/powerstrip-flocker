@@ -47,6 +47,7 @@ from treq.client import HTTPClient
 from flocker.acceptance.test_api import get_test_cluster
 from flocker.acceptance.testtools import run_SSH
 from flocker.testtools import loop_until
+from twisted.python.filepath import FilePath
 
 from signal import SIGINT
 from os import kill
@@ -65,7 +66,7 @@ PF_VERSION = "volume-plugin"
 BUILD_ONCE = []
 INJECT_ONCE = {}
 BUILDSLAVE_DOCKER_DIR = "/home/buildslave/fedora-vagrant/flocker-acceptance-vagrant-fedora-20/build/docker"
-KEY = "/root/.ssh/id_rsa_flocker"
+KEY = FilePath(os.path.expanduser("~") + "/.ssh/id_rsa_flocker")
 
 class PowerstripFlockerTests(TestCase):
     """
