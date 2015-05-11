@@ -93,7 +93,7 @@ def run_SSH(port, user, node, command, input, key=None,
         process.stdin.write(input)
         return process
     else:
-        process = Popen(command, stdout=PIPE, stdin=PIPE)
+        process = Popen(command, stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
     result = process.communicate(input)
     if process.returncode != 0:
