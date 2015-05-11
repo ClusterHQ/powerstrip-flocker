@@ -72,6 +72,8 @@ def run_SSH(port, user, node, command, input, key=None,
     command = [
         b'ssh',
         b'-p', b'%d' % (port,),
+        b'-o', b'StrictHostKeyChecking=no',
+        b'-o', b'UserKnownHostsFile=/dev/null',
         ]
 
     if key is not None:
