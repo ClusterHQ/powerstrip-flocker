@@ -95,4 +95,8 @@ MINION
     node2.vm.provision "shell", inline: $minion
   end
 
+  config.vm.provision "file", source: "~/.ssh/id_rsa_flocker.pub", destination: "/root/.ssh/authorized_keys"
+  config.vm.provision "shell", inline: "chown root /root/.ssh/authorized_keys"
+  config.vm.provision "shell", inline: "chmod 0600 /root/.ssh/authorized_keys"
+
 end
