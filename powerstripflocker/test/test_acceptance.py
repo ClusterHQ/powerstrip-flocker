@@ -108,7 +108,7 @@ from flocker.testtools import loop_until
 from twisted.python.filepath import FilePath
 
 from signal import SIGINT
-from os import kill
+from os import kill, path, system
 
 from characteristic import attributes
 
@@ -141,8 +141,6 @@ class PowerstripFlockerTests(TestCase):
         """
         Using blocking APIs, build docker once per test run.
         """
-        return
-        """
         if len(BUILD_ONCE):
             return
         if path.exists(BUILDSLAVE_DOCKER_DIR):
@@ -158,15 +156,12 @@ class PowerstripFlockerTests(TestCase):
             if exit > 0:
                 raise Exception("failed to build docker")
         BUILD_ONCE.append(1)
-        """
 
 
     def _injectDockerOnce(self, ip):
         """
         Using blocking APIs, copy the docker binary from whence it was built in
         _buildDockerOnce to the given ip.
-        """
-        return
         """
         if ip not in INJECT_ONCE:
             INJECT_ONCE[ip] = []
@@ -180,13 +175,13 @@ class PowerstripFlockerTests(TestCase):
                     dockerDir=BUILDSLAVE_DOCKER_DIR, dockerVersion=dockerVersion)
             hostBinaryPath = "/usr/bin/docker"
             key = "/home/buildslave/.ssh/id_rsa_flocker"
-            exit = system("scp -i %(key)s %(binaryPath)s root@%(ip)s:%(hostBinaryPath)s" % dict(
-                key=key, hostBinaryPath=hostBinaryPath, binaryPath=binaryPath, ip=ip))
+            exit = system("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
+                          "-i %(key)s %(binaryPath)s root@%(ip)s:%(hostBinaryPath)s" % dict(
+                            key=key, hostBinaryPath=hostBinaryPath, binaryPath=binaryPath, ip=ip))
             if exit > 0:
                 raise Exception("failed to inject docker into %(ip)s" % dict(ip=ip))
 
         INJECT_ONCE[ip].append(1)
-        """
 
 
     def setUp(self):
