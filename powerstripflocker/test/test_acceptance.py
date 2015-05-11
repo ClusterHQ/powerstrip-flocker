@@ -45,7 +45,63 @@ import treq
 from treq.client import HTTPClient
 
 from flocker.acceptance.test_api import get_test_cluster
-from flocker.acceptance.testtools import run_SSH
+
+from pipes import quote as shell_quote
+from subprocess import PIPE, Popen
+def run_SSH(port, user, node, command, input, key=None,
+            background=False):
+    """
+    Run a command via SSH.
+
+    :param int port: Port to connect to.
+    :param bytes user: User to run the command as.
+    :param bytes node: Node to run command on.
+    :param command: Command to run.
+    :type command: ``list`` of ``bytes``.
+    :param bytes input: Input to send to command.
+    :param FilePath key: If not None, the path to a private key to use.
+    :param background: If ``True``, don't block waiting for SSH process to
+         end or read its stdout. I.e. it will run "in the background".
+         Also ensures remote process has pseudo-tty so killing the local SSH
+         process will kill the remote one.
+
+    :return: stdout as ``bytes`` if ``background`` is false, otherwise
+        return the ``subprocess.Process`` object.
+    """
+    quotedCommand = ' '.join(map(shell_quote, command))
+    command = [
+        b'ssh',
+        b'-p', b'%d' % (port,),
+        ]
+
+    if key is not None:
+        command.extend([
+            b"-i",
+            key.path])
+
+    if background:
+        # Force pseudo-tty so that remote process exists when the ssh
+        # client does:
+        command.extend([b"-t", b"-t"])
+
+    command.extend([
+        b'@'.join([user, node]),
+        quotedCommand
+    ])
+    if background:
+        process = Popen(command, stdin=PIPE)
+        process.stdin.write(input)
+        return process
+    else:
+        process = Popen(command, stdout=PIPE, stdin=PIPE)
+
+    result = process.communicate(input)
+    if process.returncode != 0:
+        raise Exception('Command Failed', command, process.returncode, result)
+
+    return result[0]
+
+
 from flocker.testtools import loop_until
 from twisted.python.filepath import FilePath
 
