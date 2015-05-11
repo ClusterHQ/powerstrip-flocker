@@ -95,8 +95,9 @@ MINION
     node2.vm.provision "shell", inline: $minion
   end
 
-  config.vm.provision "file", source: "~/.ssh/id_rsa_flocker.pub", destination: "/root/.ssh/authorized_keys"
-  config.vm.provision "shell", inline: "chown root /root/.ssh/authorized_keys"
-  config.vm.provision "shell", inline: "chmod 0600 /root/.ssh/authorized_keys"
+  config.vm.provision "file", source: "~/.ssh/id_rsa_flocker.pub", destination: "/tmp/id_rsa_flocker.pub"
+  config.vm.provision "shell", inline: "cp /tmp/id_rsa_flocker.pub /root/.ssh/authorized_keys", privileged: true
+  config.vm.provision "shell", inline: "chown root /root/.ssh/authorized_keys", privileged: true
+  config.vm.provision "shell", inline: "chmod 0600 /root/.ssh/authorized_keys", privileged: true
 
 end
