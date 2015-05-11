@@ -39,7 +39,6 @@ command=$cmd
 EOF
 
 supervisorctl update
-supervisorctl start $service
 
 # setup flocker-control on master only
 
@@ -54,7 +53,6 @@ command=$cmd
 EOF
 
 supervisorctl update
-supervisorctl start $service
 
 MASTER
 
@@ -76,7 +74,6 @@ command=$cmd
 EOF
 
 supervisorctl update
-supervisorctl start $service
 
 MINION
 
