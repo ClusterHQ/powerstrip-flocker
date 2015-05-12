@@ -213,7 +213,7 @@ class PowerstripFlockerTests(TestCase):
                 # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
                 shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
                 # cleanup stale sockets
-                shell(ip, "rm %s/*" % (PLUGIN_DIR,))
+                shell(ip, "rm -f %s/*" % (PLUGIN_DIR,))
                 shell(ip, "supervisorctl stop flocker-agent")
                 shell(ip, "supervisorctl start flocker-agent")
                 """
