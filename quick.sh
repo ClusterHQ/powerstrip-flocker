@@ -29,7 +29,7 @@ DOCKER_PULL_REPO="lmarsden"
 # $ docker build -t $BRANCHNAME .
 # $ docker run --privileged --rm -ti -v `pwd`:/go/src/github.com/docker/docker $BRANCHNAME hack/make.sh binary
 
-DOCKER_BINARY="${HOME}/Projects/docker/bundles/1.5.0-plugins/binary/docker-1.5.0-plugins"
+DOCKER_BINARY="${HOME}/Projects/docker/bundles/1.7.0-dev/binary/docker-1.7.0-dev"
 
 KEY="${HOME}/.ssh/id_rsa_flocker"
 DOCKER_PATH_ON_HOST="/usr/bin/docker"
@@ -41,9 +41,9 @@ NODE2="172.16.255.241"
 for NODE in $NODE1 $NODE2; do
     if [ -e $DOCKER_BINARY ]; then
         echo "Uploading modified docker to test node..."
-        ssh -i $KEY $USER@$NODE systemctl stop docker
+        ssh -i $KEY $USER@$NODE initctl stop docker
         scp -i $KEY $DOCKER_BINARY $USER@$NODE:$DOCKER_PATH_ON_HOST
-        ssh -i $KEY $USER@$NODE systemctl start docker
+        ssh -i $KEY $USER@$NODE initctl start docker
         ssh -i $KEY $USER@$NODE docker --version
     fi
 done
