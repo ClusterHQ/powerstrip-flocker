@@ -55,7 +55,7 @@ $common = <<COMMON
 
 # re-taste the zpool if necessary
 
-sudo zpool import -d /
+sudo zpool import -d / flocker
 
 # setup flocker-agent on both nodes
 
