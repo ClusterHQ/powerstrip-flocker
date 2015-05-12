@@ -35,6 +35,7 @@ testing against.
 # version of flocker that happens to be installed locally)
 import sys, os, json
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
+DOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/docker"
 sys.path.insert(0, FLOCKER_PATH)
 
 from twisted.internet import defer, reactor
@@ -123,7 +124,6 @@ PF_VERSION = "volume-plugin"
 # hacks hacks hacks
 BUILD_ONCE = []
 INJECT_ONCE = {}
-BUILDSLAVE_DOCKER_DIR = "/home/buildslave/fedora-vagrant/flocker-acceptance-vagrant-fedora-20/build/docker"
 KEY = FilePath(os.path.expanduser("~") + "/.ssh/id_rsa_flocker")
 
 class PowerstripFlockerTests(TestCase):
@@ -143,14 +143,14 @@ class PowerstripFlockerTests(TestCase):
         """
         if len(BUILD_ONCE):
             return
-        if path.exists(BUILDSLAVE_DOCKER_DIR):
+        if path.exists(DOCKER_PATH):
             dockerCmd = ("cd %(dockerDir)s;"
                    "docker build -t custom-docker .;"
                    "docker run --privileged --rm "
                        "-e DOCKER_GITCOMMIT=`git log -1 --format=%%h` "
                        "-v %(dockerDir)s:/go/src/github.com/docker/docker "
                        "custom-docker hack/make.sh binary" % dict(
-                           dockerDir=BUILDSLAVE_DOCKER_DIR))
+                           dockerDir=DOCKER_PATH))
             print "Running docker command:", dockerCmd
             exit = system(dockerCmd)
             if exit > 0:
@@ -168,11 +168,11 @@ class PowerstripFlockerTests(TestCase):
         if len(INJECT_ONCE[ip]):
             return
 
-        if path.exists(BUILDSLAVE_DOCKER_DIR):
+        if path.exists(DOCKER_PATH):
             # e.g. 1.5.0-plugins
-            dockerVersion = open("%s/VERSION" % (BUILDSLAVE_DOCKER_DIR,)).read().strip()
+            dockerVersion = open("%s/VERSION" % (DOCKER_PATH,)).read().strip()
             binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/binary/docker-%(dockerVersion)s" % dict(
-                    dockerDir=BUILDSLAVE_DOCKER_DIR, dockerVersion=dockerVersion)
+                    dockerDir=DOCKER_PATH, dockerVersion=dockerVersion)
             hostBinaryPath = "/usr/bin/docker"
             key = "/home/buildslave/.ssh/id_rsa_flocker"
             exit = system("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
