@@ -1,9 +1,8 @@
 """
-A Powerstrip adapter which integrates Docker with Flocker to enable portable
-volumes without wrapping Docker.
+A Docker plugin which integrates Docker with Flocker to enable portable volumes
+without wrapping Docker.
 
 See:
-* https://github.com/clusterhq/powerstrip
 * https://github.com/clusterhq/flocker
 """
 
@@ -20,7 +19,7 @@ import treq
 
 class HandshakeResource(resource.Resource):
     """
-    A powerstrip pre-hook for container create.
+    A hook for initial handshake.  Say that we're a volume plugin.
     """
     isLeaf = True
 
@@ -30,13 +29,60 @@ class HandshakeResource(resource.Resource):
         ))
 
 class CreateResource(resource.Resource):
-    pass
+    """
+    Docker has asked us to create a named volume.  We do nothing in this case,
+    because all the good stuff happens in Mount.
+    """
+    isLeaf = True
+
+    def render_POST(self, request):
+        # expect Name
+        print "create:", request.content.read()
+        return json.dumps(dict(
+             Err=None,
+        ))
 
 class RemoveResource(resource.Resource):
-    pass
+    """
+    Docker has asked us to remove a named volume.  In our case, we disregard
+    this request, because flocker volumes are supposed to be able to outlive
+    docker volumes.
+    """
+    isLeaf = True
+
+    def render_POST(self, request):
+        # expect Name
+        print "remove:", request.content.read()
+        return json.dumps(dict(
+             Err=None,
+        ))
 
 class PathResource(resource.Resource):
-    pass
+    """
+    Docker has asked us for the concrete on-disk location of an extant volume.
+    If it hasn't already asked for it to be mounted, this is an error.
+    """
+    def render_POST(self, request):
+        # expect Name
+        print "path:", request.content.read()
+        return json.dumps(dict(
+             Mountpoint="", # XXX figure this out
+             Err=None, # XXX set this sometimes (see docstring)
+        ))
+
+class UnmountResource(resource.Resource):
+    """
+    Docker has asked us to unmount a volume.  Rather, it has notified us that
+    it is no longer actively using a container with this volume.
+    """
+    def render_POST(self, request):
+        # expect Name
+        print "unmount:", request.content.read()
+        # XXX actually 'release' the volume in some sense. See
+        # https://github.com/ClusterHQ/powerstrip-flocker/issues/1
+        return json.dumps(dict(
+             Err=None,
+        ))
 
 class MountResource(resource.Resource):
     """
@@ -199,5 +245,3 @@ def loop_until(predicate):
     d.addCallback(loop)
     return d
 
-class UnmountResource(resource.Resource):
-    pass
