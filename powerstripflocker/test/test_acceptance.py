@@ -245,8 +245,8 @@ class PowerstripFlockerTests(TestCase):
                 cmd = ("cd /root && if [ ! -e powerstrip-flocker ]; then "
                            "git clone https://github.com/clusterhq/powerstrip-flocker && "
                            "cd powerstrip-flocker && "
-                           "git checkout %s;" % (PF_VERSION,)
-                       + "fi && "
+                           "git checkout %s && cd /root;" % (PF_VERSION,)
+                       + "fi && cd /root/powerstrip-flocker && "
                        + "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,)
                        + " MY_NETWORK_IDENTITY=%s" % (ip,)
                        + " MY_HOST_UUID=%s" % (host_uuid,)
