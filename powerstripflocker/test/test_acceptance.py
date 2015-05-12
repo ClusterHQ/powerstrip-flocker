@@ -220,10 +220,10 @@ class PowerstripFlockerTests(TestCase):
                         run(ip, ["docker", "rm", "-f", container])
                     except Exception:
                         print container, "was not running, not killed, OK."
-                """
                 # start flocker-plugin
                 FLOCKER_PLUGIN = "%s/flocker-plugin:%s" % (DOCKER_PULL_REPO, PF_VERSION)
                 run(ip, ["docker", "pull", FLOCKER_PLUGIN])
+                """
                 # TODO - come up with cleaner/nicer way of flocker-plugin
                 # being able to establish its own host uuid (or volume
                 # mountpoints), such as API calls.
