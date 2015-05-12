@@ -240,10 +240,14 @@ class PowerstripFlockerTests(TestCase):
                 """
                 host_uuid = run(ip, ["python", "-c", "import json; "
                     "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
-                cmd = ("cd %s; FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (BASE_PATH, self.cluster.base_url,)
-                                   + " MY_NETWORK_IDENTITY=%s" % (ip,)
-                                   + " MY_HOST_UUID=%s" % (host_uuid,)
-                                   + " twistd -noy powerstripflocker.tac")
+                cmd = ("cd /root && "
+                       "git clone https://github.com/clusterhq/powerstrip-flocker && "
+                       "cd powerstrip-flocker && "
+                       "git checkout %s && " % (PF_VERSION,)
+                       + "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (BASE_PATH, self.cluster.base_url,)
+                       + " MY_NETWORK_IDENTITY=%s" % (ip,)
+                       + " MY_HOST_UUID=%s" % (host_uuid,)
+                       + " twistd -noy powerstripflocker.tac")
                 print "CMD >>", cmd
                 self.plugins[ip] = remote_service_for_test(self, ip,
                     ["bash", "-c", cmd])
