@@ -212,6 +212,8 @@ class PowerstripFlockerTests(TestCase):
                 self._injectDockerOnce(ip)
                 # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
                 shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
+                # cleanup stale sockets
+                shell(ip, "rm %s/*" % (PLUGIN_DIR,))
                 shell(ip, "supervisorctl stop flocker-agent")
                 shell(ip, "supervisorctl start flocker-agent")
                 """
@@ -240,10 +242,11 @@ class PowerstripFlockerTests(TestCase):
                 """
                 host_uuid = run(ip, ["python", "-c", "import json; "
                     "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
-                cmd = ("cd /root && "
-                       "git clone https://github.com/clusterhq/powerstrip-flocker && "
-                       "cd powerstrip-flocker && "
-                       "git checkout %s && " % (PF_VERSION,)
+                cmd = ("cd /root && if [ ! -e powerstrip-flocker ]; then "
+                           "git clone https://github.com/clusterhq/powerstrip-flocker && "
+                           "cd powerstrip-flocker && "
+                           "git checkout %s;" % (PF_VERSION,)
+                       + "fi && "
                        + "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,)
                        + " MY_NETWORK_IDENTITY=%s" % (ip,)
                        + " MY_HOST_UUID=%s" % (host_uuid,)
