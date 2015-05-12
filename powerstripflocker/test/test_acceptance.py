@@ -279,7 +279,7 @@ class PowerstripFlockerTests(TestCase):
         fsName = "test001"
         print "About to run docker run..."
         shell(node1, "docker run "
-                     "-v /flocker/%s:/data busybox "
+                     "-v %s:/data --volume-driver=flocker busybox "
                      "sh -c 'echo 1 > /data/file'" % (fsName,))
         url = self.cluster.base_url + "/configuration/datasets"
         d = self.client.get(url)
@@ -305,7 +305,7 @@ class PowerstripFlockerTests(TestCase):
         node1, node2 = sorted(self.ips)
         fsName = "test001"
         container_id = shell(node1, "docker run -d "
-                                    "-v /flocker/%s:/data busybox "
+                                    "-v %s:/data --volume-driver=flocker busybox "
                                     "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
         # The volume that Docker now has mounted...
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id]))
@@ -329,14 +329,14 @@ class PowerstripFlockerTests(TestCase):
         fsName = "test001"
         # First volume...
         container_id_1 = shell(node1, "docker run -d "
-                                      "-v /flocker/%s:/data busybox "
+                                      "-v %s:/data --volume-driver=flocker busybox "
                                       "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_1]))
         volume_1 = docker_inspect[0]["Volumes"].values()[0]
 
         # Second volume...
         container_id_2 = shell(node1, "docker run -d "
-                                      "-v /flocker/%s:/data busybox "
+                                      "-v %s:/data --volume-driver=flocker busybox "
                                       "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_2]))
         volume_2 = docker_inspect[0]["Volumes"].values()[0]
@@ -353,11 +353,11 @@ class PowerstripFlockerTests(TestCase):
         fsName = "test001"
         # Write some bytes to a volume on one host...
         shell(node1, "docker run "
-                     "-v /flocker/%s:/data busybox "
+                     "-v %s:/data --volume-driver=flocker busybox "
                      "sh -c 'echo chicken > /data/file'" % (fsName,))
         # ... and read them from the same named volume on another...
         container_id = shell(node2, "docker run -d "
-                                    "-v /flocker/%s:/data busybox "
+                                    "-v %s:/data --volume-driver=flocker busybox "
                                     "sh -c 'cat /data/file'" % (fsName,)).strip()
         output = run(node2, ["docker", "logs", container_id])
         self.assertEqual(output.strip(), "chicken")
