@@ -207,7 +207,7 @@ class PowerstripFlockerTests(TestCase):
             for ip in self.ips:
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
-                shell(ip, "initctl stop docker")
+                shell(ip, "sleep 5 && initctl stop docker")
                 # Copy docker into the respective node
                 self._injectDockerOnce(ip)
                 # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
