@@ -36,6 +36,7 @@ testing against.
 import sys, os, json
 FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
 DOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/docker"
+PLUGIN_DIR = "/usr/share/docker/plugins"
 sys.path.insert(0, FLOCKER_PATH)
 
 from twisted.internet import defer, reactor
@@ -209,7 +210,8 @@ class PowerstripFlockerTests(TestCase):
                 # Copy docker into the respective node
                 self._injectDockerOnce(ip)
                 # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
-                shell(ip, "mkdir -p /usr/share/docker/plugins")
+                shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
+                shell(ip, "rm %s/*" % (PLUGIN_DIR,))
                 shell(ip, "initctl start docker")
                 shell(ip, "supervisorctl stop flocker-agent")
                 shell(ip, "supervisorctl start flocker-agent")
@@ -230,7 +232,7 @@ class PowerstripFlockerTests(TestCase):
                     "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
                 self.plugins[ip] = remote_service_for_test(self, ip,
                     ["docker", "run", "--name=flocker-plugin",
-                        "-v", "/usr/share/docker/plugins:/usr/share/docker/plugins",
+                        "-v", "%s:%s" % (PLUGIN_DIR, PLUGIN_DIR),
                         "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
                         "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
                         "-e", "MY_HOST_UUID=%s" % (host_uuid,),
@@ -395,7 +397,7 @@ def wait_for_plugin(hostname):
     Wait until a non-zero number of plugins are loaded.
     """
     return loop_until(lambda:
-            "Plugins: 0" not in shell(hostname, "docker info |grep Plugins"))
+            "flocker.sock" in shell(hostname, "ls -alh %s" % (PLUGIN_DIR,)))
 
 
 def wait_for_socket(hostname, port):
