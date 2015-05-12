@@ -53,6 +53,14 @@ MINION
 
 $common = <<COMMON
 
+# make nodes trust eachother by using the same insecure key for root on both
+# nodes and adding the same to root's authorized_keys file.
+
+cp /vagrant/insecure_private_key /root/.ssh/id_rsa
+chmod 600 /root/.ssh/id_rsa
+cat /vagrant/insecure_private_key.pub >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
 # re-taste the zpool if necessary
 
 sudo zpool import -d / flocker
