@@ -229,10 +229,11 @@ class PowerstripFlockerTests(TestCase):
                 host_uuid = run(ip, ["python", "-c", "import json; "
                     "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
                 self.plugins[ip] = remote_service_for_test(self, ip,
-                    ["docker", "run", "--plugin", "--name=flocker",
-                       "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
-                       "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
-                       "-e", "MY_HOST_UUID=%s" % (host_uuid,),
+                    ["docker", "run", "--name=flocker-plugin",
+                        "-v", "/usr/share/docker/plugins:/usr/share/docker/plugins",
+                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
+                        "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
+                        "-e", "MY_HOST_UUID=%s" % (host_uuid,),
                        FLOCKER_PLUGIN])
                 print "Waiting for flocker-plugin to show up on", ip, "..."
                 # XXX This will only work for the first test, need to restart
