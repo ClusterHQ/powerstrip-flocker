@@ -34,8 +34,9 @@ testing against.
 # hack to ensure we import from flocker module in submodule (rather than a
 # version of flocker that happens to be installed locally)
 import sys, os, json
-FLOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/flocker"
-DOCKER_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../")) + "/docker"
+BASE_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../"))
+FLOCKER_PATH = BASE_PATH + "/flocker"
+DOCKER_PATH = BASE_PATH + "/docker"
 PLUGIN_DIR = "/usr/share/docker/plugins"
 sys.path.insert(0, FLOCKER_PATH)
 
@@ -211,15 +212,15 @@ class PowerstripFlockerTests(TestCase):
                 self._injectDockerOnce(ip)
                 # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
                 shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
-                shell(ip, "rm %s/*" % (PLUGIN_DIR,))
-                shell(ip, "initctl start docker")
                 shell(ip, "supervisorctl stop flocker-agent")
                 shell(ip, "supervisorctl start flocker-agent")
+                """
                 for container in ("flocker",):
                     try:
                         run(ip, ["docker", "rm", "-f", container])
                     except Exception:
                         print container, "was not running, not killed, OK."
+                """
                 # start flocker-plugin
                 FLOCKER_PLUGIN = "%s/flocker-plugin:%s" % (DOCKER_PULL_REPO, PF_VERSION)
                 run(ip, ["docker", "pull", FLOCKER_PLUGIN])
@@ -228,15 +229,24 @@ class PowerstripFlockerTests(TestCase):
                 # mountpoints), such as API calls.
                 # See https://github.com/ClusterHQ/flocker-plugin/issues/2
                 # for how to do this now.
-                host_uuid = run(ip, ["python", "-c", "import json; "
-                    "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
+                """
                 self.plugins[ip] = remote_service_for_test(self, ip,
-                    ["docker", "run", "--name=flocker-plugin",
+                    ["docker", "run", "--name=flocker",
                         "-v", "%s:%s" % (PLUGIN_DIR, PLUGIN_DIR),
                         "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
                         "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
                         "-e", "MY_HOST_UUID=%s" % (host_uuid,),
                        FLOCKER_PLUGIN])
+                """
+                host_uuid = run(ip, ["python", "-c", "import json; "
+                    "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
+                self.plugins[ip] = remote_service_for_test(self, ip,
+                    ["bash", "-c", "cd %s; FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (BASE_PATH, self.cluster.base_url,)
+                                   + " MY_NETWORK_IDENTITY=%s" % (ip,)
+                                   + " MY_HOST_UUID=%s" % (host_uuid,)
+                                   + " twistd -noy powerstripflocker.tac"])
+                # XXX Better not to have sleep 5 in here but hey
+                shell(ip, "sleep 5 && initctl start docker")
                 print "Waiting for flocker-plugin to show up on", ip, "..."
                 # XXX This will only work for the first test, need to restart
                 # docker in tearDown.
