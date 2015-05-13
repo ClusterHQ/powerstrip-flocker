@@ -22,6 +22,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.cache.scope = :box
   end
 
+  # XXX NB: the "0.4.0" version of this box is actually flocker@master
+  # 2015-05-13, I kept it named "0.4.0" for convenience with respect to not
+  # needing to modify how flocker's acceptance test runner identifies version
+  # numbers.
+
 $master = <<MASTER
 
 IP=172.16.255.240
