@@ -30,7 +30,7 @@ apt-get update
 
 apt-get install -y ubuntu-zfs
 
-flocker_tag="0.4.0"
+flocker_commit="5bfa9b846b091cfb9f2b1ea762c1869d8f21eece"
 
 if [[ ! -x /vagrant ]]; then
     ln -s /root/ubuntu /vagrant
@@ -44,7 +44,7 @@ echo "Cloning flocker..."
 cd /opt
 git clone https://github.com/clusterhq/flocker
 cd flocker
-git checkout tags/$flocker_tag
+git checkout $flocker_commit
 
 apt-get -y install python-setuptools python-dev
 
