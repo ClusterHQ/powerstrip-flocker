@@ -30,9 +30,6 @@ These tests have a propensity to fail unless you also change "MaxClients"
 setting higher than 10 (e.g. 100) in /etc/sshd_config on the nodes you're
 testing against.
 """
-
-# hack to ensure we import from flocker module in submodule (rather than a
-# version of flocker that happens to be installed locally)
 import sys, os, json
 BASE_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../"))
 FLOCKER_PATH = BASE_PATH + "/flocker"
@@ -214,8 +211,8 @@ class PowerstripFlockerTests(TestCase):
                 shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
                 # cleanup stale sockets
                 shell(ip, "rm -f %s/*" % (PLUGIN_DIR,))
-                shell(ip, "supervisorctl stop flocker-agent")
-                shell(ip, "supervisorctl start flocker-agent")
+                #shell(ip, "supervisorctl stop flocker-agent")
+                #shell(ip, "supervisorctl start flocker-agent")
                 """
                 for container in ("flocker",):
                     try:
