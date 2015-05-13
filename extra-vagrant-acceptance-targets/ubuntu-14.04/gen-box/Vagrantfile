@@ -56,7 +56,7 @@ cd machinist-0.2.0
 python setup.py install
 
 cd ~/
-wget https://pypi.python.org/packages/source/e/eliot/eliot-0.6.0.tar.gz
+wget https://pypi.python.org/packages/source/e/eliot/eliot-0.7.1.tar.gz
 tar zxfv eliot-0.6.0.tar.gz
 cd eliot-0.6.0
 python setup.py install
