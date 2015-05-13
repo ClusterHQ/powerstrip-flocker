@@ -1,5 +1,5 @@
 ```
 vagrant up node1
-vagrant package node1 flocker-ubuntu.box
+vagrant package node1
 ```
-Then upload it to Atlas.
+Then upload `package.box` to Atlas.
