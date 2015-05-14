@@ -309,7 +309,7 @@ class PowerstripFlockerTests(TestCase):
                                    "|grep flocker/ |wc -l").strip()
         self.assertEqual(int(zfs_volumes), 1)
         # ... and contains a file which contains the characters "fish".
-        catFileOutput = shell(node1, "docker run -d "
+        catFileOutput = shell(node1, "docker run "
                                      "-v %s:/data --volume-driver=flocker busybox "
                                      "cat /data/file" % (fsName,)).strip()
         self.assertEqual(catFileOutput, "fish")
