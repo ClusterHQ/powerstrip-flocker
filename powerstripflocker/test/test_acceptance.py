@@ -301,18 +301,17 @@ class PowerstripFlockerTests(TestCase):
         """
         node1, node2 = sorted(self.ips)
         fsName = "test001"
-        container_id = shell(node1, "docker run -d "
-                                    "-v %s:/data --volume-driver=flocker busybox "
-                                    "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
-        # The volume that Docker now has mounted...
-        docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id]))
-        volume = docker_inspect[0]["Volumes"].values()[0]
-        # ... exists as a ZFS volume...
+        shell(node1, "docker run -d "
+                     "-v %s:/data --volume-driver=flocker busybox "
+                     "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+        # The volume that Docker now has mounted exists as a ZFS volume...
         zfs_volumes = shell(node1, "zfs list -t snapshot,filesystem -r flocker "
                                    "|grep flocker/ |wc -l").strip()
         self.assertEqual(int(zfs_volumes), 1)
         # ... and contains a file which contains the characters "fish".
-        catFileOutput = run(node1, ["cat", "%s/file" % (volume,)]).strip()
+        catFileOutput = shell(node1, "docker run -d "
+                                     "-v %s:/data --volume-driver=flocker busybox "
+                                     "cat /data/file" % (fsName,)).strip()
         self.assertEqual(catFileOutput, "fish")
 
     def test_create_two_datasets_same_name(self):
