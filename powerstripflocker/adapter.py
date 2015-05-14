@@ -133,13 +133,13 @@ class MountResource(resource.Resource):
                     therefore that when it settles down to only show it on one
                     host that this means the move is complete.
                     """
-                    print "Got", self.ip, "datasets:", datasets
+                    print "Got", self.ip, self.host_uuid, "datasets:", datasets
                     matching_datasets = []
                     for dataset in datasets:
                         if dataset["dataset_id"] == dataset_id:
                             matching_datasets.append(dataset)
                     if len(matching_datasets) == 1:
-                        if matching_datasets[0]["primary"] == self.ip:
+                        if matching_datasets[0]["primary"] == self.host_uuid:
                             return True
                     return False
                 d.addCallback(check_dataset_exists)
@@ -172,7 +172,7 @@ class MountResource(resource.Resource):
                     # if a dataset exists, and is in the right place, we're cool.
                     if fs in configured_dataset_mapping:
                         dataset = configured_dataset_mapping[fs]
-                        if dataset["primary"] == self.ip:
+                        if dataset["primary"] == self.host_uuid:
                             # simulate "immediate success"
                             fs_create_deferreds.append(defer.succeed((fs, dataset["dataset_id"])))
                         else:
@@ -181,7 +181,7 @@ class MountResource(resource.Resource):
                             d = self.client.post(
                                 self.base_url + "/configuration/datasets/%s" % (
                                     dataset["dataset_id"].encode('ascii'),),
-                                json.dumps({"primary": self.ip}),
+                                json.dumps({"primary": self.host_uuid}),
                                 headers={'Content-Type': ['application/json']})
                             d.addCallback(treq.json_content)
                             d.addCallback(wait_until_volume_in_place, fs=fs)
@@ -189,7 +189,7 @@ class MountResource(resource.Resource):
                     else:
                         # if a dataset doesn't exist at all, create it on this server.
                         d = self.client.post(self.base_url + "/configuration/datasets",
-                            json.dumps({"primary": self.ip, "metadata": {"name": fs}}),
+                            json.dumps({"primary": self.host_uuid, "metadata": {"name": fs}}),
                             headers={'Content-Type': ['application/json']})
                         d.addCallback(treq.json_content)
                         d.addCallback(wait_until_volume_in_place, fs=fs)
