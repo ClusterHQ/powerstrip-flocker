@@ -50,6 +50,8 @@ $common = <<COMMON
 
 CONTROL_NODE=172.16.255.240
 
+mkdir -p /etc/flocker
+
 cat <<EOF > /etc/flocker/agent.yml
 control-service: {hostname: '${CONTROL_NODE}', port: 4524}
 version: 1
