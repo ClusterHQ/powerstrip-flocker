@@ -144,7 +144,7 @@ class MountResource(resource.Resource):
                 d.addCallback(check_dataset_exists)
                 return d
             d = loop_until(dataset_exists)
-            d.addCallback(lambda ignored: (fs, dataset_id))
+            d.addCallback(lambda ignored: (fs, result))
             return d
 
         d = self.client.get(self.base_url + "/state/nodes")
@@ -182,7 +182,7 @@ class MountResource(resource.Resource):
                         dataset = configured_dataset_mapping[fs]
                         if dataset["primary"] == self.host_uuid:
                             # simulate "immediate success"
-                            fs_create_deferreds.append(defer.succeed((fs, dataset["dataset_id"])))
+                            fs_create_deferreds.append(defer.succeed((fs, dataset)))
                         else:
                             # if a dataset exists, but is on the wrong server [TODO
                             # and is not being used], then move it in place.
@@ -209,8 +209,7 @@ class MountResource(resource.Resource):
                 new_binds = []
                 for fs, remainder in old_binds:
                     # forget about remainder...
-                    new_binds.append("/flocker/%s.default.%s" %
-                            (self.host_uuid, dataset_mapping[fs]))
+                    new_binds.append(dataset_mapping[fs]["path"])
                 new_json = {}
                 if new_binds:
                     new_json["Mountpoint"] = new_binds[0]
