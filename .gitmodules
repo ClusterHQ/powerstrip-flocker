@@ -3,4 +3,4 @@
 	url = https://github.com/clusterhq/flocker
 [submodule "docker"]
 	path = docker
-	url = https://github.com/clusterhq/docker-plugins
+	url = https://github.com/calavera/docker
