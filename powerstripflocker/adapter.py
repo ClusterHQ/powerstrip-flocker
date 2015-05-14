@@ -106,7 +106,6 @@ class MountResource(resource.Resource):
 
         self.base_url = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
         self.ip = os.environ.get("MY_NETWORK_IDENTITY")
-        self.host_uuid = os.environ.get("MY_HOST_UUID")
 
         def wait_until_volume_in_place(result, fs):
             """
@@ -148,7 +147,16 @@ class MountResource(resource.Resource):
             d.addCallback(lambda ignored: (fs, dataset_id))
             return d
 
-        d = self.client.get(self.base_url + "/configuration/datasets")
+        d = self.client.get(self.base_url + "/state/nodes")
+        d.addCallback(treq.json_content)
+        def find_my_uuid(nodes):
+            for node in nodes:
+                if node["host"] == self.ip:
+                    self.host_uuid = node["uuid"]
+                    break
+            return self.client.get(self.base_url + "/configuration/datasets")
+        d.addCallback(find_my_uuid)
+
         d.addCallback(treq.json_content)
         def got_dataset_configuration(configured_datasets):
             # form a mapping from names onto dataset objects
