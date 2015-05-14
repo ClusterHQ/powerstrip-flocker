@@ -121,6 +121,7 @@ class MountResource(resource.Resource):
                 filesystem has been created/moved and mounted (iow, exists on
                 the right host in the cluster state).
             """
+            print "wait_until_volume_in_place while processing", fs, "got result", result
             dataset_id = result["dataset_id"]
             def dataset_exists():
                 d = self.client.get(self.base_url + "/state/datasets")
