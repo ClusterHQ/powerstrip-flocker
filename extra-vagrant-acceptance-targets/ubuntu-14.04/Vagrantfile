@@ -69,11 +69,22 @@ chmod 600 /root/.ssh/authorized_keys
 
 sudo zpool import -d / flocker
 
-# setup flocker-agent on both nodes
+# setup flocker-zfs-agent on both nodes
 
 FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
 cmd="$FLOCKER_ZFS_AGENT"
-service="flocker-agent"
+service="flocker-zfs-agent"
+
+cat << EOF > /etc/supervisor/conf.d/$service.conf
+[program:$service]
+command=$cmd
+EOF
+
+# setup flocker-container-agent on both nodes
+
+FLOCKER_CONTAINER_AGENT=`which flocker-container-agent`
+cmd="$FLOCKER_CONTAINER_AGENT"
+service="flocker-container-agent"
 
 cat << EOF > /etc/supervisor/conf.d/$service.conf
 [program:$service]
