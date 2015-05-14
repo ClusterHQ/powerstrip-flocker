@@ -183,7 +183,7 @@ class MountResource(resource.Resource):
                         if dataset["primary"] == self.host_uuid:
                             # check / wait for the state to match the desired
                             # configuration
-                            fs_create_deferreds.append(wait_until_volume_in_place(fs=fs))
+                            fs_create_deferreds.append(wait_until_volume_in_place(dataset, fs=fs))
                         else:
                             # if a dataset exists, but is on the wrong server [TODO
                             # and is not being used], then move it in place.
