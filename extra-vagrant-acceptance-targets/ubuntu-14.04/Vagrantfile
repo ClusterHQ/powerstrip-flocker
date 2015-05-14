@@ -48,7 +48,12 @@ MASTER
 
 $common = <<COMMON
 
-CONTROLIP=172.16.255.240
+CONTROL_NODE=172.16.255.240
+
+cat <<EOF > /etc/flocker/agent.yml
+control-service: {hostname: '${CONTROL_NODE}', port: 4524}
+version: 1
+EOF
 
 # make nodes trust eachother by using the same insecure key for root on both
 # nodes and adding the same to root's authorized_keys file.
@@ -65,7 +70,7 @@ sudo zpool import -d / flocker
 # setup flocker-agent on both nodes
 
 FLOCKER_ZFS_AGENT=`which flocker-zfs-agent`
-cmd="$FLOCKER_ZFS_AGENT $CONTROLIP"
+cmd="$FLOCKER_ZFS_AGENT"
 service="flocker-agent"
 
 cat << EOF > /etc/supervisor/conf.d/$service.conf
