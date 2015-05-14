@@ -139,12 +139,12 @@ class MountResource(resource.Resource):
                             matching_datasets.append(dataset)
                     if len(matching_datasets) == 1:
                         if matching_datasets[0]["primary"] == self.host_uuid:
-                            return True
+                            return matching_datasets[0]
                     return False
                 d.addCallback(check_dataset_exists)
                 return d
             d = loop_until(dataset_exists)
-            d.addCallback(lambda ignored: (fs, result))
+            d.addCallback(lambda dataset: (fs, dataset))
             return d
 
         d = self.client.get(self.base_url + "/state/nodes")
