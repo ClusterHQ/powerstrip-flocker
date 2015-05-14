@@ -207,6 +207,7 @@ class MountResource(resource.Resource):
             d = defer.gatherResults(fs_create_deferreds)
             def got_created_and_moved_datasets(list_new_datasets):
                 dataset_mapping = dict(list_new_datasets)
+                print "constructed dataset_mapping", dataset_mapping
                 new_binds = []
                 for fs, remainder in old_binds:
                     # forget about remainder...
