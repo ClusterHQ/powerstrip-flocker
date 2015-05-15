@@ -125,11 +125,14 @@ BUILD_ONCE = []
 INJECT_ONCE = {}
 KEY = FilePath(os.path.expanduser("~") + "/.ssh/id_rsa_flocker")
 
-class PowerstripFlockerTests(TestCase):
+
+class FlockerTestsMixin():
     """
     Real flocker-plugin tests against two nodes using the flocker
     acceptance testing framework.
     """
+
+
 
     # Slow builds because initial runs involve pulling some docker images
     # (flocker-plugin).
@@ -384,6 +387,31 @@ class PowerstripFlockerTests(TestCase):
         """
         pass
     test_two_datasets_one_move_one_create.skip = "not implemented yet"
+
+
+
+
+
+class PluginAsContainerTests(TestCase, FlockerTestsMixin):
+    """
+    Run the plugin inside a container. Test that when a container starts before
+    a plugin that it depends on, docker correctly waits some timeout before
+    failing the container start.
+    """
+    def _makeFlockerPluginRun(self):
+        pass
+
+
+
+class PluginOutsideContainerTests(TestCase, FlockerTestsMixin):
+    """
+    Run the plugin outside of a container. The plugin will therefore always be
+    available at /usr/share/docker/plugins.
+    """
+    def _makeFlockerPluginRun(self):
+        pass
+
+
 
 
 def shell(node, command, input=""):
