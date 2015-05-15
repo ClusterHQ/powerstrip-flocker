@@ -384,6 +384,7 @@ class PluginOutsideContainerTests(TestCase, FlockerTestsMixin):
 
     def _runFlockerPlugin(self, ip):
         shell(ip, "sleep 5 && initctl stop docker || true")
+        shell(ip, "supervisorctl restart flocker-control")
         # Copy docker into the respective node
         self._injectDockerOnce(ip)
         # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
