@@ -29,7 +29,7 @@ DOCKER_PULL_REPO="lmarsden"
 # $ docker build -t $BRANCHNAME .
 # $ docker run --privileged --rm -ti -v `pwd`:/go/src/github.com/docker/docker $BRANCHNAME hack/make.sh binary
 
-DOCKER_BINARY="${HOME}/Projects/docker/bundles/1.7.0-dev/binary/docker-1.7.0-dev"
+DOCKER_BINARY="${PWD}/docker/bundles/1.7.0-dev/binary/docker-1.7.0-dev"
 
 KEY="${HOME}/.ssh/id_rsa_flocker"
 DOCKER_PATH_ON_HOST="/usr/bin/docker"
