@@ -174,7 +174,7 @@ class FlockerTestsMixin():
             hostBinaryPath = "/usr/bin/docker"
             cmd = ("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
                           "-i %(key)s %(binaryPath)s root@%(ip)s:%(hostBinaryPath)s" % dict(
-                            key=KEY, hostBinaryPath=hostBinaryPath, binaryPath=binaryPath, ip=ip))
+                            key=KEY.path, hostBinaryPath=hostBinaryPath, binaryPath=binaryPath, ip=ip))
             print "running command to inject docker:", cmd
             exit = system(cmd)
             if exit > 0:
