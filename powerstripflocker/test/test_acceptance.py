@@ -118,7 +118,7 @@ from characteristic import attributes
 # Docker hub called "flocker-plugin". Then modify $DOCKER_PULL_REPO in
 # quick.sh accordingly and use that script.
 DOCKER_PULL_REPO = "lmarsden"
-PF_VERSION = "testing_combined_volume_plugin"
+PF_VERSION = "new_integration_tests"
 
 # hacks hacks hacks
 BUILD_ONCE = []
@@ -132,12 +132,9 @@ class FlockerTestsMixin():
     acceptance testing framework.
     """
 
-
-
     # Slow builds because initial runs involve pulling some docker images
     # (flocker-plugin).
     timeout = 1200
-
 
     def _buildDockerOnce(self):
         """
@@ -205,62 +202,8 @@ class FlockerTestsMixin():
             # Build docker if necessary (if there's a docker submodule)
             self._buildDockerOnce()
             for ip in self.ips:
-                # cleanup after previous test runs
-                #run(ip, ["pkill", "-f", "flocker"])
-                shell(ip, "sleep 5 && initctl stop docker || true")
-                # Copy docker into the respective node
-                self._injectDockerOnce(ip)
-                # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
-                shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
-                # cleanup stale sockets
-                shell(ip, "rm -f %s/*" % (PLUGIN_DIR,))
-                #shell(ip, "supervisorctl stop flocker-agent")
-                #shell(ip, "supervisorctl start flocker-agent")
-                """
-                for container in ("flocker",):
-                    try:
-                        run(ip, ["docker", "rm", "-f", container])
-                    except Exception:
-                        print container, "was not running, not killed, OK."
-                # start flocker-plugin
-                FLOCKER_PLUGIN = "%s/flocker-plugin:%s" % (DOCKER_PULL_REPO, PF_VERSION)
-                run(ip, ["docker", "pull", FLOCKER_PLUGIN])
-                """
-                # TODO - come up with cleaner/nicer way of flocker-plugin
-                # being able to establish its own host uuid (or volume
-                # mountpoints), such as API calls.
-                # See https://github.com/ClusterHQ/flocker-plugin/issues/2
-                # for how to do this now.
-                """
-                self.plugins[ip] = remote_service_for_test(self, ip,
-                    ["docker", "run", "--name=flocker",
-                        "-v", "%s:%s" % (PLUGIN_DIR, PLUGIN_DIR),
-                        "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
-                        "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
-                        "-e", "MY_HOST_UUID=%s" % (host_uuid,),
-                       FLOCKER_PLUGIN])
-                """
-                host_uuid = run(ip, ["python", "-c", "import json; "
-                    "print json.load(open('/etc/flocker/volume.json'))['uuid']"]).strip()
-                cmd = ("cd /root && if [ ! -e powerstrip-flocker ]; then "
-                           "git clone https://github.com/clusterhq/powerstrip-flocker && "
-                           "cd powerstrip-flocker && "
-                           "git checkout %s && cd /root;" % (PF_VERSION,)
-                       + "fi && cd /root/powerstrip-flocker && "
-                       + "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,)
-                       + " MY_NETWORK_IDENTITY=%s" % (ip,)
-                       + " MY_HOST_UUID=%s" % (host_uuid,)
-                       + " twistd -noy powerstripflocker.tac")
-                print "CMD >>", cmd
-                self.plugins[ip] = remote_service_for_test(self, ip,
-                    ["bash", "-c", cmd])
-                # XXX Better not to have sleep 5 in here but hey
-                shell(ip, "sleep 5 && initctl start docker")
-                print "Waiting for flocker-plugin to show up on", ip, "..."
-                # XXX This will only work for the first test, need to restart
-                # docker in tearDown.
-                daemonReadyDeferreds.append(wait_for_plugin(ip))
-
+                d = self._runFlockerPlugin(ip)
+                daemonReadyDeferreds.append(d)
             d = defer.gatherResults(daemonReadyDeferreds)
             # def debug():
             #     services
@@ -390,8 +333,6 @@ class FlockerTestsMixin():
 
 
 
-
-
 class PluginAsContainerTests(TestCase, FlockerTestsMixin):
     """
     Run the plugin inside a container. Test that when a container starts before
@@ -402,8 +343,33 @@ class PluginAsContainerTests(TestCase, FlockerTestsMixin):
     def setUp(self):
         return FlockerTestsMixin.setUp(self)
 
-    def _makeFlockerPluginRun(self):
-        pass
+    def _runFlockerPlugin(self, ip):
+        # cleanup after previous test runs
+        run(ip, ["pkill", "-f", "flocker"])
+        shell(ip, "sleep 5 && initctl stop docker || true")
+        # Copy docker into the respective node
+        self._injectDockerOnce(ip)
+        # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
+        shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
+        # cleanup stale sockets
+        shell(ip, "rm -f %s/*" % (PLUGIN_DIR,))
+        for container in ("flocker",):
+            try:
+                run(ip, ["docker", "rm", "-f", container])
+            except Exception:
+                print container, "was not running, not killed, OK."
+        # start flocker-plugin
+        FLOCKER_PLUGIN = "%s/flocker-plugin:%s" % (DOCKER_PULL_REPO, PF_VERSION)
+        run(ip, ["docker", "pull", FLOCKER_PLUGIN])
+        self.plugins[ip] = remote_service_for_test(self, ip,
+            ["docker", "run", "--name=flocker",
+                "-v", "%s:%s" % (PLUGIN_DIR, PLUGIN_DIR),
+                "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
+                "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
+               FLOCKER_PLUGIN])
+        shell(ip, "sleep 5 && initctl start docker")
+        print "Waiting for flocker-plugin to show up on", ip, "..."
+        return wait_for_plugin(ip)
 
 
 
@@ -415,9 +381,28 @@ class PluginOutsideContainerTests(TestCase, FlockerTestsMixin):
     def setUp(self):
         return FlockerTestsMixin.setUp(self)
 
-    def _makeFlockerPluginRun(self):
-        pass
-
+    def _runFlockerPlugin(self, ip):
+        shell(ip, "sleep 5 && initctl stop docker || true")
+        # Copy docker into the respective node
+        self._injectDockerOnce(ip)
+        # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
+        shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
+        # cleanup stale sockets
+        shell(ip, "rm -f %s/*" % (PLUGIN_DIR,))
+        cmd = ("cd /root && if [ ! -e powerstrip-flocker ]; then "
+                   "git clone https://github.com/clusterhq/powerstrip-flocker && "
+                   "cd powerstrip-flocker && "
+                   "git checkout %s && cd /root;" % (PF_VERSION,)
+               + "fi && cd /root/powerstrip-flocker && "
+               + "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,)
+               + " MY_NETWORK_IDENTITY=%s" % (ip,)
+               + " twistd -noy powerstripflocker.tac")
+        print "CMD >>", cmd
+        self.plugins[ip] = remote_service_for_test(self, ip,
+            ["bash", "-c", cmd])
+        shell(ip, "sleep 5 && initctl start docker")
+        print "Waiting for flocker-plugin to show up on", ip, "..."
+        return wait_for_plugin(ip)
 
 
 
