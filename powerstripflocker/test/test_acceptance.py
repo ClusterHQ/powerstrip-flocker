@@ -136,6 +136,8 @@ class PowerstripFlockerTests(TestCase):
     # (flocker-plugin).
     timeout = 1200
 
+    def _cleanupZpool(self, ip):
+        shell(ip, "zfs destroy -rf flocker")
 
     def _buildDockerOnce(self):
         """
@@ -156,7 +158,6 @@ class PowerstripFlockerTests(TestCase):
             if exit > 0:
                 raise Exception("failed to build docker")
         BUILD_ONCE.append(1)
-
 
     def _injectDockerOnce(self, ip):
         """
@@ -183,7 +184,6 @@ class PowerstripFlockerTests(TestCase):
 
         INJECT_ONCE[ip].append(1)
 
-
     def setUp(self):
         """
         Ready the environment for tests which actually run docker
@@ -203,6 +203,7 @@ class PowerstripFlockerTests(TestCase):
             # Build docker if necessary (if there's a docker submodule)
             self._buildDockerOnce()
             for ip in self.ips:
+                self._cleanupZpool(ip)
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
                 shell(ip, "sleep 5 && initctl stop docker || true")
