@@ -50,7 +50,7 @@ for NODE in $NODE1 $NODE2; do
 done
 
 if [ "$1" != "--no-build" ]; then
-    docker build -t ${DOCKER_PULL_REPO}/flocker-plugin:${PF_VERSION}.
+    docker build -t ${DOCKER_PULL_REPO}/flocker-plugin:${PF_VERSION} .
     docker push ${DOCKER_PULL_REPO}/flocker-plugin:${PF_VERSION}
 fi
 
