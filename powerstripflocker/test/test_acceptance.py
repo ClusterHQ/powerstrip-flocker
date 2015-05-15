@@ -398,6 +398,10 @@ class PluginAsContainerTests(TestCase, FlockerTestsMixin):
     a plugin that it depends on, docker correctly waits some timeout before
     failing the container start.
     """
+
+    def setUp(self):
+        return FlockerTestsMixin.setUp(self)
+
     def _makeFlockerPluginRun(self):
         pass
 
@@ -408,6 +412,9 @@ class PluginOutsideContainerTests(TestCase, FlockerTestsMixin):
     Run the plugin outside of a container. The plugin will therefore always be
     available at /usr/share/docker/plugins.
     """
+    def setUp(self):
+        return FlockerTestsMixin.setUp(self)
+
     def _makeFlockerPluginRun(self):
         pass
 
