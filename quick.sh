@@ -17,6 +17,7 @@ set -x -e
 
 # This should match up with DOCKER_PULL_REPO in powerstripflocker/test/test_acceptance.py
 DOCKER_PULL_REPO="lmarsden"
+PF_VERSION="new_integration_tests"
 
 # This is a docker binary which gets scp'd onto the nodes...
 
