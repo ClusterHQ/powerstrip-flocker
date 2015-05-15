@@ -359,6 +359,7 @@ class PluginAsContainerTests(TestCase, FlockerTestsMixin):
                 run(ip, ["docker", "rm", "-f", container])
             except Exception:
                 print container, "was not running, not killed, OK."
+        shell(ip, "sleep 5 && initctl start docker")
         # start flocker-plugin
         FLOCKER_PLUGIN = "%s/flocker-plugin:%s" % (DOCKER_PULL_REPO, PF_VERSION)
         run(ip, ["docker", "pull", FLOCKER_PLUGIN])
@@ -368,7 +369,6 @@ class PluginAsContainerTests(TestCase, FlockerTestsMixin):
                 "-e", "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,),
                 "-e", "MY_NETWORK_IDENTITY=%s" % (ip,),
                FLOCKER_PLUGIN])
-        shell(ip, "sleep 5 && initctl start docker")
         print "Waiting for flocker-plugin to show up on", ip, "..."
         return wait_for_plugin(ip)
 
