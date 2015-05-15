@@ -125,7 +125,6 @@ BUILD_ONCE = []
 INJECT_ONCE = {}
 KEY = FilePath(os.path.expanduser("~") + "/.ssh/id_rsa_flocker")
 
-
 class FlockerTestsMixin():
     """
     Real flocker-plugin tests against two nodes using the flocker
@@ -173,9 +172,11 @@ class FlockerTestsMixin():
             binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/binary/docker-%(dockerVersion)s" % dict(
                     dockerDir=DOCKER_PATH, dockerVersion=dockerVersion)
             hostBinaryPath = "/usr/bin/docker"
-            exit = system("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
+            cmd = ("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
                           "-i %(key)s %(binaryPath)s root@%(ip)s:%(hostBinaryPath)s" % dict(
                             key=KEY, hostBinaryPath=hostBinaryPath, binaryPath=binaryPath, ip=ip))
+            print "running command to inject docker:", cmd
+            exit = system(cmd)
             if exit > 0:
                 raise Exception("failed to inject docker into %(ip)s" % dict(ip=ip))
 
