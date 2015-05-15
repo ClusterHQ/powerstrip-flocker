@@ -344,7 +344,6 @@ class PluginAsContainerTests(TestCase, FlockerTestsMixin):
 
     def _runFlockerPlugin(self, ip):
         # cleanup after previous test runs
-        run(ip, ["pkill", "-f", "flocker"])
         shell(ip, "sleep 5 && initctl stop docker || true")
         # Copy docker into the respective node
         self._injectDockerOnce(ip)
