@@ -173,10 +173,9 @@ class FlockerTestsMixin():
             binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/binary/docker-%(dockerVersion)s" % dict(
                     dockerDir=DOCKER_PATH, dockerVersion=dockerVersion)
             hostBinaryPath = "/usr/bin/docker"
-            key = "/home/buildslave/.ssh/id_rsa_flocker"
             exit = system("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
                           "-i %(key)s %(binaryPath)s root@%(ip)s:%(hostBinaryPath)s" % dict(
-                            key=key, hostBinaryPath=hostBinaryPath, binaryPath=binaryPath, ip=ip))
+                            key=KEY, hostBinaryPath=hostBinaryPath, binaryPath=binaryPath, ip=ip))
             if exit > 0:
                 raise Exception("failed to inject docker into %(ip)s" % dict(ip=ip))
 
