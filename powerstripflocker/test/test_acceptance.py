@@ -135,6 +135,9 @@ class FlockerTestsMixin():
     # (flocker-plugin).
     timeout = 1200
 
+    def _cleanupZpool(self, ip):
+        shell(ip, "zfs destroy -rf flocker")
+
     def _buildDockerOnce(self):
         """
         Using blocking APIs, build docker once per test run.
@@ -154,7 +157,6 @@ class FlockerTestsMixin():
             if exit > 0:
                 raise Exception("failed to build docker")
         BUILD_ONCE.append(1)
-
 
     def _injectDockerOnce(self, ip):
         """
@@ -182,7 +184,6 @@ class FlockerTestsMixin():
 
         INJECT_ONCE[ip].append(1)
 
-
     def setUp(self):
         """
         Ready the environment for tests which actually run docker
@@ -202,6 +203,7 @@ class FlockerTestsMixin():
             # Build docker if necessary (if there's a docker submodule)
             self._buildDockerOnce()
             for ip in self.ips:
+                self._cleanupZpool(ip)
                 d = self._runFlockerPlugin(ip)
                 daemonReadyDeferreds.append(d)
             d = defer.gatherResults(daemonReadyDeferreds)
