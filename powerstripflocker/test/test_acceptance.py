@@ -125,6 +125,7 @@ BUILD_ONCE = []
 INJECT_ONCE = {}
 KEY = FilePath(os.path.expanduser("~") + "/.ssh/id_rsa_flocker")
 
+
 class PowerstripFlockerTests(TestCase):
     """
     Real flocker-plugin tests against two nodes using the flocker
@@ -383,6 +384,17 @@ class PowerstripFlockerTests(TestCase):
         """
         pass
     test_two_datasets_one_move_one_create.skip = "not implemented yet"
+
+
+class CompatTests(PowerstripFlockerTests):
+    """
+    Volume driver can also be specified inline as part of volume name.
+    """
+    def _volArgs(self, fsName):
+        return "-v flocker/%s:/data busybox " % (fsName,)
+
+    # TODO also test the remote API directly
+
 
 
 def shell(node, command, input=""):
