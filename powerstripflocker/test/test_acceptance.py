@@ -288,6 +288,9 @@ class PowerstripFlockerTests(TestCase):
         d.addBoth(verify)
         return d
 
+    def _volArgs(self, fsName):
+        return "-v %s:/data --volume-driver=flocker busybox " % (fsName,)
+
     def test_create_a_dataset_manifests(self):
         """
         Running a docker container specifying a dataset name which has never
@@ -302,16 +305,14 @@ class PowerstripFlockerTests(TestCase):
         node1, node2 = sorted(self.ips)
         fsName = "test001"
         shell(node1, "docker run -d "
-                     "-v %s:/data --volume-driver=flocker busybox "
-                     "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+                     + self._volArgs(fsName) +
+                     "busybox sh -c 'echo fish > /data/file'").strip()
         # The volume that Docker now has mounted exists as a ZFS volume...
         zfs_volumes = shell(node1, "zfs list -t snapshot,filesystem -r flocker "
                                    "|grep flocker/ |wc -l").strip()
         self.assertEqual(int(zfs_volumes), 1)
         # ... and contains a file which contains the characters "fish".
-        catFileOutput = shell(node1, "docker run "
-                                     "-v %s:/data --volume-driver=flocker busybox "
-                                     "cat /data/file" % (fsName,)).strip()
+        catFileOutput = shell(node1, "docker run " + self._volArgs(fsName) + "busybox cat /data/file").strip()
         self.assertEqual(catFileOutput, "fish")
 
     def test_create_two_datasets_same_name(self):
@@ -324,19 +325,17 @@ class PowerstripFlockerTests(TestCase):
         node1, node2 = sorted(self.ips)
         fsName = "test001"
         # First volume...
-        container_id_1 = shell(node1, "docker run -d "
-                                      "-v %s:/data --volume-driver=flocker busybox "
-                                      "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+        container_id_1 = shell(node1, "docker run -d " + self._volArgs(fsName) + "busybox sh -c 'echo fish > /data/file'").strip()
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_1]))
         volume_1 = docker_inspect[0]["Volumes"].values()[0]
 
         # Second volume...
         container_id_2 = shell(node1, "docker run -d "
-                                      "-v %s:/data --volume-driver=flocker busybox "
-                                      "sh -c 'echo fish > /data/file'" % (fsName,)).strip()
+                                      + self._volArgs(fsName) +
+                                      "busybox sh -c 'echo fish > /data/file'".strip()
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_2]))
         volume_2 = docker_inspect[0]["Volumes"].values()[0]
-        # ... have the same flocker UUID.
+        # ... have the same flocker UUID. XXX this is an invalid test now
         self.assertEqual(volume_1, volume_2)
 
     def test_move_a_dataset(self):
@@ -349,12 +348,12 @@ class PowerstripFlockerTests(TestCase):
         fsName = "test001"
         # Write some bytes to a volume on one host...
         shell(node1, "docker run "
-                     "-v %s:/data --volume-driver=flocker busybox "
-                     "sh -c 'echo chicken > /data/file'" % (fsName,))
+                     + self._volArgs(fsName) +
+                     "busybox sh -c 'echo chicken > /data/file'")
         # ... and read them from the same named volume on another...
         container_id = shell(node2, "docker run -d "
-                                    "-v %s:/data --volume-driver=flocker busybox "
-                                    "sh -c 'cat /data/file'" % (fsName,)).strip()
+                                    + self._volArgs(fsName) +
+                                    "busybox sh -c 'cat /data/file'").strip()
         output = run(node2, ["docker", "logs", container_id])
         self.assertEqual(output.strip(), "chicken")
 
