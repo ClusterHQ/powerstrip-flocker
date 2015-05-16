@@ -276,8 +276,8 @@ class PowerstripFlockerTests(TestCase):
         fsName = "test001"
         print "About to run docker run..."
         shell(node1, "docker run "
-                     "-v %s:/data --volume-driver=flocker busybox "
-                     "sh -c 'echo 1 > /data/file'" % (fsName,))
+                     + self._volArgs(fsName) +
+                     "busybox sh -c 'echo 1 > /data/file'")
         url = self.cluster.base_url + "/configuration/datasets"
         d = self.client.get(url)
         d.addCallback(treq.json_content)
@@ -332,7 +332,7 @@ class PowerstripFlockerTests(TestCase):
         # Second volume...
         container_id_2 = shell(node1, "docker run -d "
                                       + self._volArgs(fsName) +
-                                      "busybox sh -c 'echo fish > /data/file'".strip()
+                                      "busybox sh -c 'echo fish > /data/file'").strip()
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_2]))
         volume_2 = docker_inspect[0]["Volumes"].values()[0]
         # ... have the same flocker UUID. XXX this is an invalid test now
