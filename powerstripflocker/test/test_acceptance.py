@@ -354,12 +354,12 @@ class PluginAsContainerTests(TestCase, FlockerTestsMixin):
         shell(ip, "mkdir -p %s" % (PLUGIN_DIR,))
         # cleanup stale sockets
         shell(ip, "rm -f %s/*" % (PLUGIN_DIR,))
+        shell(ip, "sleep 5 && initctl start docker")
         for container in ("flocker",):
             try:
                 run(ip, ["docker", "rm", "-f", container])
             except Exception:
                 print container, "was not running, not killed, OK."
-        shell(ip, "sleep 5 && initctl start docker")
         # start flocker-plugin
         FLOCKER_PLUGIN = "%s/flocker-plugin:%s" % (DOCKER_PULL_REPO, PF_VERSION)
         run(ip, ["docker", "pull", FLOCKER_PLUGIN])
