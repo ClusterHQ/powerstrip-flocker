@@ -290,7 +290,7 @@ class PowerstripFlockerTests(TestCase):
         return d
 
     def _volArgs(self, fsName):
-        return "-v %s:/data --volume-driver=flocker busybox " % (fsName,)
+        return "-v %s:/data --volume-driver=flocker " % (fsName,)
 
     def test_create_a_dataset_manifests(self):
         """
@@ -391,7 +391,7 @@ class CompatTests(PowerstripFlockerTests):
     Volume driver can also be specified inline as part of volume name.
     """
     def _volArgs(self, fsName):
-        return "-v flocker/%s:/data busybox " % (fsName,)
+        return "-v flocker/%s:/data " % (fsName,)
 
     # TODO also test the remote API directly
 
