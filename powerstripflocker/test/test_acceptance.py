@@ -41,13 +41,14 @@ from twisted.internet import defer, reactor
 from twisted.trial.unittest import TestCase
 from twisted.web.client import Agent
 import socket
-import treq
 from treq.client import HTTPClient
 
 from flocker.acceptance.test_api import get_test_cluster
 
 from pipes import quote as shell_quote
 from subprocess import PIPE, Popen
+from powerstripflocker import treq
+
 def run_SSH(port, user, node, command, input, key=None,
             background=False):
     """
@@ -407,6 +408,7 @@ class CompatTests(PowerstripFlockerTests):
         Using legacy docker api and driver-in-volume-name, flocker volumes can
         be created.
         """
+
 
 
 def shell(node, command, input=""):
