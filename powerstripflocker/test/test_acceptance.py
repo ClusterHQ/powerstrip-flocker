@@ -269,6 +269,14 @@ class PowerstripFlockerTests(TestCase):
         d.addCallback(got_cluster)
         return d
 
+    def _volArgs(self, fsName):
+        """
+        Return the string used as part of `docker run` to specify a volume as
+        belonging to a volume driver. Can be overridden in a subclass to run
+        all the tests with different syntax.
+        """
+        return "-v %s:/data --volume-driver=flocker " % (fsName,)
+
     def test_create_a_dataset(self):
         """
         Running a docker container specifying a dataset name which has never
@@ -289,9 +297,6 @@ class PowerstripFlockerTests(TestCase):
             #self.assertEqual(result[0]["primary"], node1)
         d.addBoth(verify)
         return d
-
-    def _volArgs(self, fsName):
-        return "-v %s:/data --volume-driver=flocker " % (fsName,)
 
     def test_create_a_dataset_manifests(self):
         """
@@ -314,7 +319,8 @@ class PowerstripFlockerTests(TestCase):
                                    "|grep flocker/ |wc -l").strip()
         self.assertEqual(int(zfs_volumes), 1)
         # ... and contains a file which contains the characters "fish".
-        catFileOutput = shell(node1, "docker run " + self._volArgs(fsName) + "busybox cat /data/file").strip()
+        catFileOutput = shell(node1, "docker run "
+                + self._volArgs(fsName) + "busybox cat /data/file").strip()
         self.assertEqual(catFileOutput, "fish")
 
     def test_create_two_datasets_same_name(self):
@@ -327,7 +333,9 @@ class PowerstripFlockerTests(TestCase):
         node1, node2 = sorted(self.ips)
         fsName = "test001"
         # First volume...
-        container_id_1 = shell(node1, "docker run -d " + self._volArgs(fsName) + "busybox sh -c 'echo fish > /data/file'").strip()
+        container_id_1 = shell(node1, "docker run -d "
+                + self._volArgs(fsName)
+                + "busybox sh -c 'echo fish > /data/file'").strip()
         docker_inspect = json.loads(run(node1, ["docker", "inspect", container_id_1]))
         volume_1 = docker_inspect[0]["Volumes"].values()[0]
 
@@ -394,8 +402,11 @@ class CompatTests(PowerstripFlockerTests):
     def _volArgs(self, fsName):
         return "-v flocker/%s:/data " % (fsName,)
 
-    # TODO also test the remote API directly
-
+    def test_docker_api(self):
+        """
+        Using legacy docker api and driver-in-volume-name, flocker volumes can
+        be created.
+        """
 
 
 def shell(node, command, input=""):
