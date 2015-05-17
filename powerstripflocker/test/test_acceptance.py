@@ -35,11 +35,13 @@ BASE_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../"))
 FLOCKER_PATH = BASE_PATH + "/flocker"
 DOCKER_PATH = BASE_PATH + "/docker"
 PLUGIN_DIR = "/usr/share/docker/plugins"
+DOCKER = "http://unix=%2Fvar%2Frun%2Fdocker.sock"
 sys.path.insert(0, FLOCKER_PATH)
 
 from twisted.internet import defer, reactor
 from twisted.trial.unittest import TestCase
 from twisted.web.client import Agent
+from twisted.web.http_headers import Headers
 import socket
 from treq.client import HTTPClient
 
@@ -408,6 +410,21 @@ class CompatTests(PowerstripFlockerTests):
         Using legacy docker api and driver-in-volume-name, flocker volumes can
         be created.
         """
+        testfs = "testfs"
+        d = self.client.post(DOCKER + "/v1.18/containers/create?name=%s" % (testfs,),
+                data=dict(
+                    Image="busybox",
+                    HostConfig=dict(Binds=["flocker/testfs:/data"])),
+                headers=Headers({"Content-Type": ["application/json"]}))
+        def done_create(result):
+            print "done create, result:", result
+            return self.client.post(DOCKER + "/v1.18/containers/%s/start" % (testfs,))
+        d.addCallback(done_create)
+        def done_start(result):
+            # TODO self.assert something
+            pass
+        return d
+
 
 
 
