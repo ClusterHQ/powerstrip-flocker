@@ -407,6 +407,7 @@ class CompatTests(PowerstripFlockerTests):
         be created and show up in flocker's desired state.
         """
         testfs = "legacy_docker_api_%d" % (random.randint(10000,99999),)
+        print "post create!"
         d = treq.post(DOCKER + "/v1.18/containers/create?name=%s" % (testfs,),
                 data=dict(
                     Image="busybox",
@@ -417,11 +418,14 @@ class CompatTests(PowerstripFlockerTests):
         def done_create(result):
             print "done create, result:", result
             container_id = result['Id'].encode("ascii")
-            return treq.post(DOCKER + "/v1.18/containers/%s/start" % (container_id,))
+            print "post start!"
+            return treq.post(DOCKER + "/v1.18/containers/%s/start" % (container_id,),
+                headers=Headers({"Content-Type": ["application/json"]}))
         d.addCallback(done_create)
         def done_start(result):
             print "done start, result:", result
             url = self.cluster.base_url + "/configuration/datasets"
+            print "get datasets!"
             return treq.get(url)
         d.addCallback(done_start)
         d.addCallback(treq.json_content)
