@@ -20,7 +20,7 @@ class UNIXCapableAgent(Agent):
 
     See http://tm.tl/6634
     """
-    def _getEndpoint(self, scheme, host, port):
+    def _getEndpoint(self, parsedURI):
         """
         Get an endpoint for the given host and port, using a transport
         selected based on scheme.
@@ -39,6 +39,7 @@ class UNIXCapableAgent(Agent):
         """
         # XXX Bad copy and paste from twisted.web.client.  Must try harder.
         # (Upstreaming this improvement with tests is the way forwards.)
+        scheme, host, port = parsedURI.scheme, parsedURI.host, parsedURI.port
         kwargs = {}
         if self._connectTimeout is not None:
             kwargs['timeout'] = self._connectTimeout
