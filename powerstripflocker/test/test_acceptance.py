@@ -202,6 +202,7 @@ class PowerstripFlockerTests(TestCase):
             for ip in self.ips:
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
+                print "stopping docker..."
                 shell(ip, "initctl stop docker || true")
                 # Copy docker into the respective node
                 self._injectDockerOnce(ip)
@@ -250,6 +251,7 @@ class PowerstripFlockerTests(TestCase):
                 self.plugins[ip] = remote_service_for_test(self, ip,
                     ["bash", "-c", cmd])
                 while "flocker.sock" not in shell(ip, "ls -alh %s" % (PLUGIN_DIR,)):
+                    print "waiting for flocker before starting docker..."
                     time.sleep(0.1)
                 shell(ip, "initctl start docker")
                 shell(ip, "docker pull busybox")
