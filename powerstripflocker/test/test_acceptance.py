@@ -315,13 +315,15 @@ class PowerstripFlockerTests(TestCase):
         """
         node1, node2 = sorted(self.ips)
         fsName = "test001"
+        zfs_volumes_before = int(shell(node1, "zfs list -t snapshot,filesystem -r flocker "
+                                   "|grep flocker/ |wc -l").strip())
         shell(node1, "docker run -d "
                      + self._volArgs(fsName) +
                      "busybox sh -c 'echo fish > /data/file'").strip()
         # The volume that Docker now has mounted exists as a ZFS volume...
         zfs_volumes = shell(node1, "zfs list -t snapshot,filesystem -r flocker "
                                    "|grep flocker/ |wc -l").strip()
-        self.assertEqual(int(zfs_volumes), 1)
+        self.assertEqual(int(zfs_volumes), zfs_volumes_before + 1)
         # ... and contains a file which contains the characters "fish".
         catFileOutput = shell(node1, "docker run "
                 + self._volArgs(fsName) + "busybox cat /data/file").strip()
