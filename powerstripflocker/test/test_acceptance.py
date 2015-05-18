@@ -419,7 +419,6 @@ class CompatTests(PowerstripFlockerTests):
             container_id = result['Id'].encode("ascii")
             return treq.post(DOCKER + "/v1.18/containers/%s/start" % (container_id,))
         d.addCallback(done_create)
-        d.addCallback(treq.json_content)
         def done_start(result):
             print "done start, result:", result
             url = self.cluster.base_url + "/configuration/datasets"
