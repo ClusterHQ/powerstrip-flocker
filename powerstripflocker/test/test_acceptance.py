@@ -205,7 +205,7 @@ class PowerstripFlockerTests(TestCase):
                 self._cleanupZpool(ip)
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
-                shell(ip, "sleep 5 && initctl stop docker || true")
+                shell(ip, "initctl stop docker || true")
                 # Copy docker into the respective node
                 self._injectDockerOnce(ip)
                 # workaround https://github.com/calavera/docker/pull/4#issuecomment-100046383
@@ -244,7 +244,7 @@ class PowerstripFlockerTests(TestCase):
                            "git clone https://github.com/clusterhq/powerstrip-flocker && "
                            "cd powerstrip-flocker && "
                            "git checkout %s && cd /root;" % (PF_VERSION,)
-                       + "fi && cd /root/powerstrip-flocker && "
+                       + "fi && cd /root/powerstrip-flocker && git pull && "
                        + "FLOCKER_CONTROL_SERVICE_BASE_URL=%s" % (self.cluster.base_url,)
                        + " MY_NETWORK_IDENTITY=%s" % (ip,)
                        + " MY_HOST_UUID=%s" % (host_uuid,)
@@ -252,8 +252,8 @@ class PowerstripFlockerTests(TestCase):
                 print "CMD >>", cmd
                 self.plugins[ip] = remote_service_for_test(self, ip,
                     ["bash", "-c", cmd])
-                # XXX Better not to have sleep 5 in here but hey
-                shell(ip, "sleep 5 && initctl start docker")
+                shell(ip, "initctl start docker")
+                shell(ip, "docker rm -f $(docker ps -a -q)")
                 print "Waiting for flocker-plugin to show up on", ip, "..."
                 # XXX This will only work for the first test, need to restart
                 # docker in tearDown.
