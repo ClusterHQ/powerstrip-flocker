@@ -89,10 +89,6 @@ def json_content(response):
     :rtype: Deferred that fires with the decoded JSON.
     """
     d = content(response)
-    def logPassthru(result):
-        print "attempting to decode", result
-        return result
-    d.addCallback(logPassthru)
     d.addCallback(json.loads)
     return d
 
