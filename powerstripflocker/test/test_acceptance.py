@@ -40,16 +40,16 @@ sys.path.insert(0, FLOCKER_PATH)
 
 from twisted.internet import defer, reactor
 from twisted.trial.unittest import TestCase
-from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 import socket
-from treq.client import HTTPClient
 
 from flocker.acceptance.test_api import get_test_cluster
 
 from pipes import quote as shell_quote
 from subprocess import PIPE, Popen
 from powerstripflocker import treq
+from powerstripflocker.treq.api import UNIXCapableAgent
+from powerstripflocker.treq.client import HTTPClient
 
 def run_SSH(port, user, node, command, input, key=None,
             background=False):
@@ -195,7 +195,7 @@ class PowerstripFlockerTests(TestCase):
         * Log into each node in turn:
           * Load flocker-plugin into docker
         """
-        self.agent = Agent(reactor) # no connectionpool
+        self.agent = UNIXCapableAgent(reactor) # no connectionpool
         self.client = HTTPClient(self.agent)
         d = get_test_cluster(self, 2)
         def got_cluster(cluster):
