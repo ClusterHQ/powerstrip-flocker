@@ -128,8 +128,6 @@ class HTTPClient(object):
         else:
             headers = Headers({})
 
-        print "headers >>", headers
-
         # Here we choose a right producer
         # based on the parameters passed in.
         bodyProducer = None
