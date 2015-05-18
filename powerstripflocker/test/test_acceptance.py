@@ -47,7 +47,7 @@ from flocker.acceptance.test_api import get_test_cluster
 
 from pipes import quote as shell_quote
 from subprocess import PIPE, Popen
-from powerstripflocker import treq
+import treq # should import modified version from ../..
 
 def run_SSH(port, user, node, command, input, key=None,
             background=False):
