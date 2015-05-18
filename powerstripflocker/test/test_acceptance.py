@@ -48,8 +48,8 @@ from flocker.acceptance.test_api import get_test_cluster
 from pipes import quote as shell_quote
 from subprocess import PIPE, Popen
 from powerstripflocker import treq
-from powerstripflocker.treq.api import UNIXCapableAgent
-from powerstripflocker.treq.client import HTTPClient
+from treq.api import UNIXCapableAgent
+from treq.client import HTTPClient
 
 def run_SSH(port, user, node, command, input, key=None,
             background=False):
