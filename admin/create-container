@@ -8,7 +8,7 @@ from twisted.internet import reactor
 from twisted.web.http_headers import Headers
 import treq
 import json
-import os
+import sys
 DOCKER = "http://unix=%2Fvar%2Frun%2Fdocker.sock"
 
 def run_container(testfs):
@@ -32,6 +32,6 @@ def run_container(testfs):
     d.addBoth(done)
     return d
 
-def __main__():
-    reactor.callWhenRunning(run_container, os.argv[1])
+if __name__ == "__main__":
+    reactor.callWhenRunning(run_container, sys.argv[1])
     reactor.run()
