@@ -7,7 +7,6 @@ from twisted.internet.protocol import Protocol
 from twisted.web.client import ResponseDone
 from twisted.web.http import PotentialDataLoss
 
-
 def _encoding_from_headers(headers):
     content_types = headers.getRawHeaders('content-type')
 
@@ -90,6 +89,10 @@ def json_content(response):
     :rtype: Deferred that fires with the decoded JSON.
     """
     d = content(response)
+    def logPassthru(result):
+        print "attempting to decode", result
+        return result
+    d.addCallback(logPassthru)
     d.addCallback(json.loads)
     return d
 
