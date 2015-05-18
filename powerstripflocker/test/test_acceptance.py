@@ -38,7 +38,7 @@ PLUGIN_DIR = "/usr/share/docker/plugins"
 DOCKER = "http://unix=%2Fvar%2Frun%2Fdocker.sock"
 sys.path.insert(0, FLOCKER_PATH)
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer
 from twisted.trial.unittest import TestCase
 from twisted.web.http_headers import Headers
 import socket
@@ -48,8 +48,6 @@ from flocker.acceptance.test_api import get_test_cluster
 from pipes import quote as shell_quote
 from subprocess import PIPE, Popen
 from powerstripflocker import treq
-from treq.api import UNIXCapableAgent
-from treq.client import HTTPClient
 
 def run_SSH(port, user, node, command, input, key=None,
             background=False):
@@ -195,8 +193,6 @@ class PowerstripFlockerTests(TestCase):
         * Log into each node in turn:
           * Load flocker-plugin into docker
         """
-        self.agent = UNIXCapableAgent(reactor) # no connectionpool
-        self.client = HTTPClient(self.agent)
         d = get_test_cluster(self, 2)
         def got_cluster(cluster):
             self.cluster = cluster
@@ -292,7 +288,7 @@ class PowerstripFlockerTests(TestCase):
                      + self._volArgs(fsName) +
                      "busybox sh -c 'echo 1 > /data/file'")
         url = self.cluster.base_url + "/configuration/datasets"
-        d = self.client.get(url)
+        d = treq.get(url)
         d.addCallback(treq.json_content)
         def verify(result):
             self.assertTrue(len(result) > 0)
@@ -411,7 +407,7 @@ class CompatTests(PowerstripFlockerTests):
         be created and show up in flocker's desired state.
         """
         testfs = "legacy_docker_api_%d" % (random.randint(10000,99999),)
-        d = self.client.post(DOCKER + "/v1.18/containers/create?name=%s" % (testfs,),
+        d = treq.post(DOCKER + "/v1.18/containers/create?name=%s" % (testfs,),
                 data=dict(
                     Image="busybox",
                     Cmd=["sh", "-c", "while true; do date > /data/file; sleep 1; done"],
@@ -421,13 +417,13 @@ class CompatTests(PowerstripFlockerTests):
         def done_create(result):
             print "done create, result:", result
             container_id = result['Id'].encode("ascii")
-            return self.client.post(DOCKER + "/v1.18/containers/%s/start" % (container_id,))
+            return treq.post(DOCKER + "/v1.18/containers/%s/start" % (container_id,))
         d.addCallback(done_create)
         d.addCallback(treq.json_content)
         def done_start(result):
             print "done start, result:", result
             url = self.cluster.base_url + "/configuration/datasets"
-            return self.client.get(url)
+            return treq.get(url)
         d.addCallback(done_start)
         d.addCallback(treq.json_content)
         def got_datasets(result):
