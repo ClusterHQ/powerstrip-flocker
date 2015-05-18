@@ -409,10 +409,10 @@ class CompatTests(PowerstripFlockerTests):
         testfs = "legacy_docker_api_%d" % (random.randint(10000,99999),)
         print "post create!"
         d = treq.post(DOCKER + "/v1.18/containers/create?name=%s" % (testfs,),
-                data=dict(
+                data=json.dumps(dict(
                     Image="busybox",
                     Cmd=["sh", "-c", "while true; do date > /data/file; sleep 1; done"],
-                    HostConfig=dict(Binds=["flocker/%s:/data" % (testfs,)])),
+                    HostConfig=dict(Binds=["flocker/%s:/data" % (testfs,)]))),
                 headers=Headers({"Content-Type": ["application/json"]}))
         d.addCallback(treq.json_content)
         def done_create(result):
