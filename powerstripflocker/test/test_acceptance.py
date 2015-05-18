@@ -253,6 +253,7 @@ class PowerstripFlockerTests(TestCase):
                 self.plugins[ip] = remote_service_for_test(self, ip,
                     ["bash", "-c", cmd])
                 shell(ip, "initctl start docker")
+                shell(ip, "docker pull busybox")
                 shell(ip, "docker rm -f $(docker ps -a -q) || true")
                 print "Waiting for flocker-plugin to show up on", ip, "..."
                 # XXX This will only work for the first test, need to restart
