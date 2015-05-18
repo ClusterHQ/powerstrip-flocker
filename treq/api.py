@@ -52,10 +52,10 @@ class UNIXCapableAgent(Agent):
                 if header == "unix":
                     return UNIXClientEndpoint(self._reactor, path, **kwargs)
 
-            kwargs['bindAddress'] = self._bindAddress
+            kwargs['bindAddress'] = self._endpointFactory._bindAddress
             return TCP4ClientEndpoint(self._reactor, host, port, **kwargs)
         elif scheme == 'https':
-            kwargs['bindAddress'] = self._bindAddress
+            kwargs['bindAddress'] = self._endpointFactory._bindAddress
             return SSL4ClientEndpoint(self._reactor, host, port,
                                       self._wrapContextFactory(host, port),
                                       **kwargs)
