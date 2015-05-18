@@ -6,7 +6,6 @@ Create a docker container using the Docker Remote API over a local UNIX socket.
 
 from twisted.internet import reactor
 from twisted.web.http_headers import Headers
-import treq
 import json
 import sys
 import os
@@ -16,6 +15,8 @@ DOCKER = "http://unix=%2Fvar%2Frun%2Fdocker.sock"
 BASE_PATH = os.path.dirname(os.path.realpath(__file__ + "/../"))
 sys.path.insert(0, BASE_PATH)
 print sys.path
+
+import treq
 
 def run_container(testfs):
     print "post create!"
