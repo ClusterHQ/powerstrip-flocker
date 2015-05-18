@@ -119,7 +119,7 @@ from characteristic import attributes
 # Docker hub called "flocker-plugin". Then modify $DOCKER_PULL_REPO in
 # quick.sh accordingly and use that script.
 DOCKER_PULL_REPO = "lmarsden"
-PF_VERSION = "testing_combined_volume_plugin"
+PF_VERSION = "testing_api_compat"
 
 # hacks hacks hacks
 BUILD_ONCE = []
