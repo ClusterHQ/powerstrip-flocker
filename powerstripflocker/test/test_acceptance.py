@@ -200,7 +200,6 @@ class PowerstripFlockerTests(TestCase):
             # Build docker if necessary (if there's a docker submodule)
             self._buildDockerOnce()
             for ip in self.ips:
-                self._cleanupZpool(ip)
                 # cleanup after previous test runs
                 #run(ip, ["pkill", "-f", "flocker"])
                 shell(ip, "initctl stop docker || true")
@@ -253,6 +252,7 @@ class PowerstripFlockerTests(TestCase):
                 shell(ip, "initctl start docker")
                 shell(ip, "docker pull busybox")
                 shell(ip, "docker rm -f $(docker ps -a -q) || true")
+                self._cleanupZpool(ip)
                 print "Waiting for flocker-plugin to show up on", ip, "..."
                 # XXX This will only work for the first test, need to restart
                 # docker in tearDown.
