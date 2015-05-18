@@ -41,7 +41,7 @@ class UNIXCapableAgent(Agent):
         # (Upstreaming this improvement with tests is the way forwards.)
         scheme, host, port = parsedURI.scheme, parsedURI.host, parsedURI.port
         kwargs = {}
-        if self._connectTimeout is not None:
+        if self._endpointFactory._connectTimeout is not None:
             kwargs['timeout'] = self._connectTimeout
         if scheme == 'http':
 
