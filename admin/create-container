@@ -9,7 +9,13 @@ from twisted.web.http_headers import Headers
 import treq
 import json
 import sys
+import os
+
 DOCKER = "http://unix=%2Fvar%2Frun%2Fdocker.sock"
+
+BASE_PATH = os.path.dirname(os.path.realpath(__file__ + "/../"))
+sys.path.insert(0, BASE_PATH)
+print sys.path
 
 def run_container(testfs):
     print "post create!"
@@ -28,6 +34,7 @@ def run_container(testfs):
             headers=Headers({"Content-Type": ["application/json"]}))
     d.addCallback(done_create)
     def done(result):
+        print result
         reactor.stop()
     d.addBoth(done)
     return d
