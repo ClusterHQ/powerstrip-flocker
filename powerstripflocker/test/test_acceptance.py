@@ -30,7 +30,7 @@ These tests have a propensity to fail unless you also change "MaxClients"
 setting higher than 10 (e.g. 100) in /etc/sshd_config on the nodes you're
 testing against.
 """
-import sys, os, json, random
+import sys, os, json, random, time
 BASE_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../"))
 FLOCKER_PATH = BASE_PATH + "/flocker"
 DOCKER_PATH = BASE_PATH + "/docker"
@@ -249,9 +249,13 @@ class PowerstripFlockerTests(TestCase):
                 print "CMD >>", cmd
                 self.plugins[ip] = remote_service_for_test(self, ip,
                     ["bash", "-c", cmd])
+                while "flocker.sock" not in shell(ip, "ls -alh %s" % (PLUGIN_DIR,)):
+                    time.sleep(0.1)
                 shell(ip, "initctl start docker")
                 shell(ip, "docker pull busybox")
-                shell(ip, "docker rm -f $(docker ps -a -q) || true")
+                if shell(ip, "docker ps -a -q").strip() != "":
+                    print "attempting cleanup of stray containers"
+                    shell(ip, "docker rm -f $(docker ps -a -q)")
                 self._cleanupZpool(ip)
                 print "Waiting for flocker-plugin to show up on", ip, "..."
                 # XXX This will only work for the first test, need to restart
