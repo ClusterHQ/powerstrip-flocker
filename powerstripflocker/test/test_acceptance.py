@@ -408,7 +408,7 @@ class CompatTests(PowerstripFlockerTests):
         testfs = "legacy_docker_api_%d" % (random.randint(10000,99999),)
         print shell(self.ips[0],
             "cd /root/powerstrip-flocker/; "
-            "PYTHONPATH=.:$PYTHONPATH admin/create-container %s" % (testfs,))
+            "PYTHONPATH=/root/powerstrip-flocker/:$PYTHONPATH admin/create-container %s" % (testfs,))
         print "done start."
         url = self.cluster.base_url + "/configuration/datasets"
         print "get datasets!"
