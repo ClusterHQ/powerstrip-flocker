@@ -21,10 +21,10 @@ DOCKER_PULL_REPO="lmarsden"
 NODE1="172.16.255.240"
 NODE2="172.16.255.241"
 
-#if [ "$1" != "--no-build" ]; then
-#    docker build -t ${DOCKER_PULL_REPO}/flocker-plugin:volume-plugin .
-#    docker push ${DOCKER_PULL_REPO}/flocker-plugin:volume-plugin
-#fi
+if [ "$1" != "--no-build" ]; then
+    docker build -t ${DOCKER_PULL_REPO}/flocker-plugin:volume-plugin .
+    docker push ${DOCKER_PULL_REPO}/flocker-plugin:volume-plugin
+fi
 
 # Run the tests.
 export FLOCKER_ACCEPTANCE_NODES="${NODE1}:${NODE2}"
