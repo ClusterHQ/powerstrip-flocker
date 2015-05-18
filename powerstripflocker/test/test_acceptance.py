@@ -30,7 +30,7 @@ These tests have a propensity to fail unless you also change "MaxClients"
 setting higher than 10 (e.g. 100) in /etc/sshd_config on the nodes you're
 testing against.
 """
-import sys, os, json
+import sys, os, json, random
 BASE_PATH = os.path.dirname(os.path.realpath(__file__ + "/../../"))
 FLOCKER_PATH = BASE_PATH + "/flocker"
 DOCKER_PATH = BASE_PATH + "/docker"
@@ -408,24 +408,33 @@ class CompatTests(PowerstripFlockerTests):
     def test_docker_api(self):
         """
         Using legacy docker api and driver-in-volume-name, flocker volumes can
-        be created.
+        be created and show up in flocker's desired state.
         """
-        testfs = "testfs"
+        testfs = "legacy_docker_api_%d" % (random.randint(10000,99999),)
         d = self.client.post(DOCKER + "/v1.18/containers/create?name=%s" % (testfs,),
                 data=dict(
                     Image="busybox",
-                    HostConfig=dict(Binds=["flocker/testfs:/data"])),
+                    Cmd=["sh", "-c", "while true; do date > /data/file; sleep 1; done"],
+                    HostConfig=dict(Binds=["flocker/%s:/data" % (testfs,)])),
                 headers=Headers({"Content-Type": ["application/json"]}))
+        d.addCallback(treq.json_content)
         def done_create(result):
             print "done create, result:", result
-            return self.client.post(DOCKER + "/v1.18/containers/%s/start" % (testfs,))
+            container_id = result['Id'].encode("ascii")
+            return self.client.post(DOCKER + "/v1.18/containers/%s/start" % (container_id,))
         d.addCallback(done_create)
+        d.addCallback(treq.json_content)
         def done_start(result):
-            # TODO self.assert something
-            pass
+            print "done start, result:", result
+            url = self.cluster.base_url + "/configuration/datasets"
+            return self.client.get(url)
+        d.addCallback(done_start)
+        d.addCallback(treq.json_content)
+        def got_datasets(result):
+            names = [dataset["metadata"].get("name") for dataset in result]
+            self.assertIn(testfs, names)
+        d.addCallback(got_datasets)
         return d
-
-
 
 
 def shell(node, command, input=""):
