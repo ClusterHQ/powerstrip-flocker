@@ -150,6 +150,11 @@ class MountResource(resource.Resource):
         d = self.client.get(self.base_url + "/state/nodes")
         d.addCallback(treq.json_content)
         def find_my_uuid(nodes):
+            """
+            Ensure there are some nodes before carrying on
+            """
+            print "Nodes returned from /state/nodes"
+            pprint.pprint(nodes)
             for node in nodes:
                 if node["host"] == self.ip:
                     self.host_uuid = node["uuid"]
