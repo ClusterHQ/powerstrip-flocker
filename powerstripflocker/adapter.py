@@ -147,7 +147,7 @@ class MountResource(resource.Resource):
             d.addCallback(lambda dataset: (fs, dataset))
             return d
 
-        def find_my_uuid(ignored):
+        def find_my_uuid():
             """
             Ensure there are some nodes before carrying on
             """
