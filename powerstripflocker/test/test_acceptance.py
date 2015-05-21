@@ -146,6 +146,7 @@ class PowerstripFlockerTests(TestCase):
             dockerCmd = ("cd %(dockerDir)s;"
                    "docker build -t custom-docker .;"
                    "docker run --privileged --rm "
+                       "-e DOCKER_EXPERIMENTAL=1 "
                        "-e DOCKER_GITCOMMIT=`git log -1 --format=%%h` "
                        "-v %(dockerDir)s:/go/src/github.com/docker/docker "
                        "custom-docker hack/make.sh binary" % dict(
