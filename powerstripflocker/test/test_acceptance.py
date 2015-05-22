@@ -170,7 +170,7 @@ class PowerstripFlockerTests(TestCase):
 
         if path.exists(DOCKER_PATH):
             # e.g. 1.5.0-plugins
-            dockerVersion = open("%s/VERSION" % (DOCKER_PATH,)).read().strip()
+            dockerVersion = "1.7.0-dev-experimental" # XXX Docker need to update their VERSION file open("%s/VERSION" % (DOCKER_PATH,)).read().strip()
             binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/binary/docker-%(dockerVersion)s" % dict(
                     dockerDir=DOCKER_PATH, dockerVersion=dockerVersion)
             hostBinaryPath = "/usr/bin/docker"
