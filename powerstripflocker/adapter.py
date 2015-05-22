@@ -60,15 +60,27 @@ class RemoveResource(resource.Resource):
 class PathResource(resource.Resource):
     """
     Docker has asked us for the concrete on-disk location of an extant volume.
-    If it hasn't already asked for it to be mounted, this is an error.
+    If it hasn't already asked for it to be mounted, or is currently on another
+    machine, this is an error.
     """
     def render_POST(self, request):
         # expect Name
-        print "path:", request.content.read()
-        return json.dumps(dict(
-             Mountpoint="", # XXX figure this out
-             Err=None, # XXX set this sometimes (see docstring)
-        ))
+        data = json.loads(request.content.read())
+        print "path:", data
+        d = self.client.get(self.base_url + "/state/datasets")
+        d.addCallback(treq.json_content)
+        def get_path(datasets):
+            mountpoint = ""
+            for dataset in datasets:
+                if dataset["metadata"]["name"] == data["Name"]:
+                    mountpoint = dataset["path"]
+            request.write(json.dumps(dict(
+                 Mountpoint=mountpoint,
+                 Err=None, # XXX set this sometimes (see docstring)
+            )))
+            request.finish()
+        d.addCallback(get_path)
+        return server.NOT_DONE_YET
 
 class UnmountResource(resource.Resource):
     """
