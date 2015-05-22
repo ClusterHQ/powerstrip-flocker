@@ -71,6 +71,8 @@ class PathResource(resource.Resource):
         d.addCallback(treq.json_content)
         def get_path(datasets):
             mountpoint = ""
+            # 1. find the flocker dataset_id of the named volume
+            # 2. 
             for dataset in datasets:
                 if dataset["metadata"]["name"] == data["Name"]:
                     mountpoint = dataset["path"]
