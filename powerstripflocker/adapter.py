@@ -64,6 +64,8 @@ class PathResource(resource.Resource):
     machine, this is an error.
     """
     def render_POST(self, request):
+        # TODO make a FlockerResource base class
+        self.base_url = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
         # expect Name
         data = json.loads(request.content.read())
         print "path:", data
