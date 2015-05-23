@@ -63,25 +63,49 @@ class PathResource(resource.Resource):
     If it hasn't already asked for it to be mounted, or is currently on another
     machine, this is an error.
     """
+    def __init__(self, *args, **kw):
+        self._agent = Agent(reactor) # no connectionpool
+        self.client = HTTPClient(self._agent)
+        return resource.Resource.__init__(self, *args, **kw)
+
     def render_POST(self, request):
+        # TODO make a FlockerResource base class
+        self.base_url = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
         # expect Name
         data = json.loads(request.content.read())
         print "path:", data
-        d = self.client.get(self.base_url + "/state/datasets")
+        d = self.client.get(self.base_url + "/configuration/datasets")
         d.addCallback(treq.json_content)
-        def get_path(datasets):
-            mountpoint = ""
+        def get_dataset(datasets):
+            dataset_id = None
             # 1. find the flocker dataset_id of the named volume
-            # 2. 
+            # 2. look up the path of that volume in the datasets current state
             for dataset in datasets:
                 if dataset["metadata"]["name"] == data["Name"]:
-                    mountpoint = dataset["path"]
-            request.write(json.dumps(dict(
-                 Mountpoint=mountpoint,
-                 Err=None, # XXX set this sometimes (see docstring)
-            )))
-            request.finish()
-        d.addCallback(get_path)
+                    dataset_id = dataset["dataset_id"]
+            d = self.client.get(self.base_url + "/state/datasets")
+            d.addCallback(treq.json_content)
+            def get_path(datasets, dataset_id):
+                if dataset_id is None:
+                    path = None
+                else:
+                    for dataset in datasets:
+                        if dataset["dataset_id"] == dataset_id:
+                            path = dataset["path"]
+                if path is not None:
+                    request.write(json.dumps(dict(
+                         Mountpoint=path,
+                         Err=None,
+                    )))
+                else:
+                    request.write(json.dumps(dict(
+                         Mountpoint="",
+                         Err="unable to find %s" % (data["Name"],),
+                    )))
+                request.finish()
+            d.addCallback(get_path, dataset_id=dataset_id)
+            return d
+        d.addCallback(get_dataset)
         return server.NOT_DONE_YET
 
 class UnmountResource(resource.Resource):
