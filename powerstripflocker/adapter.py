@@ -63,6 +63,11 @@ class PathResource(resource.Resource):
     If it hasn't already asked for it to be mounted, or is currently on another
     machine, this is an error.
     """
+    def __init__(self, *args, **kw):
+        self._agent = Agent(reactor) # no connectionpool
+        self.client = HTTPClient(self._agent)
+        return resource.Resource.__init__(self, *args, **kw)
+
     def render_POST(self, request):
         # TODO make a FlockerResource base class
         self.base_url = os.environ.get("FLOCKER_CONTROL_SERVICE_BASE_URL")
