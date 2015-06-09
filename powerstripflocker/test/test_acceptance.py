@@ -143,6 +143,10 @@ class PowerstripFlockerTests(TestCase):
         if len(BUILD_ONCE):
             return
         if path.exists(DOCKER_PATH):
+            # cleanup after an old test run, to avoid uploading the wrong binary
+            cleanupPath = DOCKER_PATH + "/bundles"
+            print "Cleaning up", cleanupPath
+            system("rm -rf " + cleanupPath)
             dockerCmd = ("cd %(dockerDir)s;"
                    "docker build -t custom-docker .;"
                    "docker run --privileged --rm "
@@ -170,9 +174,14 @@ class PowerstripFlockerTests(TestCase):
 
         if path.exists(DOCKER_PATH):
             # e.g. 1.5.0-plugins
-            dockerVersion = "1.7.0-dev-experimental" # XXX Docker need to update their VERSION file open("%s/VERSION" % (DOCKER_PATH,)).read().strip()
+            # XXX Docker need to update their VERSION file open("%s/VERSION" % (DOCKER_PATH,)).read().strip()
+            dockerVersion = "1.7.0-dev-experimental"
             binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/binary/docker-%(dockerVersion)s" % dict(
                     dockerDir=DOCKER_PATH, dockerVersion=dockerVersion)
+            if not os.path.exists(binaryPath):
+                dockerVersion = open("%s/VERSION" % (DOCKER_PATH,)).read().strip()
+                binaryPath = "%(dockerDir)s/bundles/%(dockerVersion)s/binary/docker-%(dockerVersion)s" % dict(
+                        dockerDir=DOCKER_PATH, dockerVersion=dockerVersion)
             hostBinaryPath = "/usr/bin/docker"
             key = "/home/buildslave/.ssh/id_rsa_flocker"
             exit = system("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
